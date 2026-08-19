@@ -104,7 +104,7 @@ export default function Home() {
               aria-label={`Go to slide ${index + 1}`}
               style={{ position: "relative", cursor: "pointer", background: "transparent", border: "none", padding: "4px" }}
             >
-              <i style={{ display: "block", width: "8px", height: "8px", borderRadius: "50%", background: currentSlide === index ? "#E2F800" : "rgba(15, 17, 21, 0.2)" }} />
+              <i style={{ display: "block", width: "8px", height: "8px", borderRadius: "50%", background: currentSlide === index ? "#CCFF00" : "rgba(15, 17, 21, 0.2)" }} />
               {currentSlide === index && (
                 <motion.span
                   layoutId="hero-pager-indicator"
@@ -113,7 +113,7 @@ export default function Home() {
                     position: "absolute",
                     inset: 0,
                     borderRadius: "12px",
-                    border: "2px solid #E2F800",
+                    border: "2px solid #CCFF00",
                     pointerEvents: "none",
                   }}
                 />

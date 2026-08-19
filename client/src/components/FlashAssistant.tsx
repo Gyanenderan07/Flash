@@ -166,10 +166,10 @@ export default function FlashAssistant({
         onClick={onOpen}
       >
         <span>
-          <Bot size={16} />
+          <Bot size={15} />
         </span>
         <b>Ask AI</b>
-        <Zap size={13} fill="currentColor" />
+        <Zap size={14} fill="#CCFF00" color="#CCFF00" />
       </motion.button>
 
       <AnimatePresence>

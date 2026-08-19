@@ -21,9 +21,11 @@
   --color-primary: var(--primary);
   --color-primary-foreground: var(--primary-foreground);
   --color-border: var(--border);
+  --color-brand-lime: #CCFF00;
+  --color-brand-dark: #0F1115;
 }
 
-:root { --background: #ffffff; --foreground: #0b0b0b; --primary: #d8ff00; --primary-foreground: #0b0b0b; --border: #e8e8e4; }
+:root { --background: #ffffff; --foreground: #0F1115; --primary: #CCFF00; --primary-foreground: #0F1115; --border: #e8e8e4; --brand-lime: #CCFF00; --brand-dark: #0F1115; }
 
 * { box-sizing: border-box; }
 html { scroll-behavior: smooth; }
@@ -123,13 +125,14 @@ button:active:not(:disabled), .lime-button:active, .black-button:active, .catego
 
 /* Color Palette Unification & Muted Outlines */
 :root {
-  --flash-lime: #D4F800;
+  --flash-lime: #CCFF00;
   --obsidian-black: #0F1115;
   --muted-outline: #E5E7EB;
 }
 
 .lime-button, .add-cart, .deal-tag, .discount-disc, .summary-total, .cart-badge {
-  background-color: #D4F800 !important;
+  background-color: #CCFF00 !important;
+  color: #0F1115 !important;
 }
 
 .commerce-product-card, .promo-card, .filter-rail, .cart-summary, .checkout-stage {
@@ -179,7 +182,7 @@ button:active:not(:disabled), .lime-button:active, .black-button:active, .catego
 .filter-toggle-btn:hover, .filter-toggle-btn.is-active {
   border-color: #0F1115;
   background: #0F1115;
-  color: #D4F800;
+  color: #CCFF00;
 }
 
 .filter-count-badge {
@@ -188,7 +191,7 @@ button:active:not(:disabled), .lime-button:active, .black-button:active, .catego
   width: 18px;
   height: 18px;
   border-radius: 50%;
-  background: #D4F800;
+  background: #CCFF00;
   color: #0F1115;
   font-size: 10px;
   font-weight: 800;
@@ -226,7 +229,7 @@ button:active:not(:disabled), .lime-button:active, .black-button:active, .catego
   gap: 7px;
   height: 38px;
   padding: 0 14px;
-  border: 1px solid rgba(212, 248, 0, 0.4);
+  border: 1px solid rgba(255, 255, 255, 0.15);
   border-radius: 99px;
   background: #0F1115;
   color: #FFFFFF;
@@ -241,7 +244,11 @@ button:active:not(:disabled), .lime-button:active, .black-button:active, .catego
 .flash-ai-trigger span {
   display: grid;
   place-items: center;
-  color: #D4F800;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: #CCFF00;
+  color: #0F1115;
 }
 
 .flash-ai-trigger b {

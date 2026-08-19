@@ -54,10 +54,10 @@ export const categoryOrder: ProductCategory[] = [
 const productSeed: Product[] = [
   {
     id: "nova-beat-x1", name: "NovaBeat X1", category: "Electronics", subcategory: "Audio", brand: "Nexora", price: 2999, mrp: 7499, stock: 24, express: true,
-    image: generated.headphones, gallery: [generated.headphones, stage("photo-1505740420928-5e560c06d30e"), stage("photo-1484704849700-f032a568e944"), stage("photo-1590658268037-6bf12165a8df")], description: "Immersive over-ear sound shaped for deep focus and fast commutes.", highlights: ["40mm spatial drivers", "42-hour battery", "Hybrid active noise cancellation", "Bluetooth 5.3 multipoint"], colors: ["#F5F2EA", "#141414", "#D8FF00"], sku: "FL-NBX1-PEARL", variants: [
+    image: generated.headphones, gallery: [generated.headphones, stage("photo-1505740420928-5e560c06d30e"), stage("photo-1484704849700-f032a568e944"), stage("photo-1590658268037-6bf12165a8df")], description: "Immersive over-ear sound shaped for deep focus and fast commutes.", highlights: ["40mm spatial drivers", "42-hour battery", "Hybrid active noise cancellation", "Bluetooth 5.3 multipoint"], colors: ["#F5F2EA", "#141414", "#CCFF00"], sku: "FL-NBX1-PEARL", variants: [
       { color: "#F5F2EA", name: "Ghost White", sku: "FL-NBX1-WHT", image: generated.headphones, gallery: [generated.headphones, stage("photo-1505740420928-5e560c06d30e"), stage("photo-1484704849700-f032a568e944"), stage("photo-1590658268037-6bf12165a8df")] },
       { color: "#141414", name: "Obsidian Black", sku: "FL-NBX1-BLK", image: stage("photo-1505740420928-5e560c06d30e"), gallery: [stage("photo-1505740420928-5e560c06d30e"), stage("photo-1484704849700-f032a568e944"), stage("photo-1590658268037-6bf12165a8df"), stage("photo-1487215078519-e21cc028cb29")] },
-      { color: "#D8FF00", name: "Volt Lime", sku: "FL-NBX1-VLT", image: stage("photo-1487215078519-e21cc028cb29"), gallery: [stage("photo-1487215078519-e21cc028cb29"), stage("photo-1590658268037-6bf12165a8df"), stage("photo-1505740420928-5e560c06d30e"), stage("photo-1484704849700-f032a568e944")] },
+      { color: "#CCFF00", name: "Volt Lime", sku: "FL-NBX1-VLT", image: stage("photo-1487215078519-e21cc028cb29"), gallery: [stage("photo-1487215078519-e21cc028cb29"), stage("photo-1590658268037-6bf12165a8df"), stage("photo-1505740420928-5e560c06d30e"), stage("photo-1484704849700-f032a568e944")] },
     ],
   },
   {
@@ -77,15 +77,15 @@ const productSeed: Product[] = [
   },
   {
     id: "flashrun-max", name: "FlashRun Max", category: "Footwear", subcategory: "Running", brand: "Vantage", price: 2599, mrp: 3999, stock: 33, express: true,
-    image: generated.sneaker, gallery: [generated.sneaker, stage("photo-1542291026-7eec264c27ff"), stage("photo-1552346154-21d32810aba3"), stage("photo-1551107696-a4b0c5a0d9a2")], description: "Responsive daily runners with a light, locked-in feel.", highlights: ["Breathable knit upper", "Adaptive foam return", "Grippy street outsole", "Reflective pull tab"], colors: ["#151515", "#F3F3EF", "#D8FF00"], sizes: ["6", "7", "8", "9", "10"], sku: "FL-FRM-BLK", variants: [
+    image: generated.sneaker, gallery: [generated.sneaker, stage("photo-1542291026-7eec264c27ff"), stage("photo-1552346154-21d32810aba3"), stage("photo-1551107696-a4b0c5a0d9a2")], description: "Responsive daily runners with a light, locked-in feel.", highlights: ["Breathable knit upper", "Adaptive foam return", "Grippy street outsole", "Reflective pull tab"], colors: ["#151515", "#F3F3EF", "#CCFF00"], sizes: ["6", "7", "8", "9", "10"], sku: "FL-FRM-BLK", variants: [
       { color: "#151515", name: "Obsidian Black", sku: "FL-FRM-BLK", image: generated.sneaker, gallery: [generated.sneaker, stage("photo-1542291026-7eec264c27ff"), stage("photo-1552346154-21d32810aba3"), stage("photo-1551107696-a4b0c5a0d9a2")] },
       { color: "#F3F3EF", name: "Ghost White", sku: "FL-FRM-WHT", image: stage("photo-1552346154-21d32810aba3"), gallery: [stage("photo-1552346154-21d32810aba3"), stage("photo-1551107696-a4b0c5a0d9a2"), stage("photo-1542291026-7eec264c27ff"), generated.sneaker] },
-      { color: "#D8FF00", name: "Volt Lime", sku: "FL-FRM-LIME", image: stage("photo-1542291026-7eec264c27ff"), gallery: [stage("photo-1542291026-7eec264c27ff"), generated.sneaker, stage("photo-1552346154-21d32810aba3"), stage("photo-1551107696-a4b0c5a0d9a2")] },
+      { color: "#CCFF00", name: "Volt Lime", sku: "FL-FRM-LIME", image: stage("photo-1542291026-7eec264c27ff"), gallery: [stage("photo-1542291026-7eec264c27ff"), generated.sneaker, stage("photo-1552346154-21d32810aba3"), stage("photo-1551107696-a4b0c5a0d9a2")] },
     ],
   },
   {
     id: "drift-hoodie", name: "Drift Studio Hoodie", category: "Fashion", subcategory: "Streetwear", brand: "Urbanic", price: 1899, mrp: 3299, stock: 43, express: true,
-    image: photo("photo-1556821840-3a63f95609a7"), gallery: [photo("photo-1556821840-3a63f95609a7"), photo("photo-1556821840-3a63f95609a7")], description: "A heavyweight layer with a clean cut and a soft brushed interior.", highlights: ["420 GSM cotton blend", "Dropped shoulder fit", "Brushed fleece interior", "Kangaroo pocket"], colors: ["#D8FF00", "#131313", "#ECEAE4"], sizes: ["S", "M", "L", "XL"], sku: "FL-DSH-LIME",
+    image: photo("photo-1556821840-3a63f95609a7"), gallery: [photo("photo-1556821840-3a63f95609a7"), photo("photo-1556821840-3a63f95609a7")], description: "A heavyweight layer with a clean cut and a soft brushed interior.", highlights: ["420 GSM cotton blend", "Dropped shoulder fit", "Brushed fleece interior", "Kangaroo pocket"], colors: ["#CCFF00", "#131313", "#ECEAE4"], sizes: ["S", "M", "L", "XL"], sku: "FL-DSH-LIME",
   },
   {
     id: "orbit-one", name: "Orbit One Chrono", category: "Watches", subcategory: "Analog Watches", brand: "Vantage", price: 4499, mrp: 8999, stock: 11, express: false,

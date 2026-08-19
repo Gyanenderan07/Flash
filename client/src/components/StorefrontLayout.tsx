@@ -33,7 +33,21 @@ export default function StorefrontLayout({ children }: { children: ReactNode }) 
   const accountInitial = user?.name.split(/\s+/).map((part) => part[0]).join("").slice(0, 2).toUpperCase();
   const activeCategory = new URLSearchParams(location.search).get("category") ?? "";
   const activeCollection = new URLSearchParams(location.search).get("collection") ?? "";
-  const categoryPath = (category: string) => `/shop?category=${encodeURIComponent(category.toLowerCase().replace(/\s+/g, "-"))}`;
+  const navItems = [
+    { id: "all-categories", label: "All Categories", to: "/shop", icon: <Menu size={16} />, checkActive: () => (location.pathname === "/shop" || location.pathname === "/") && !activeCategory && !activeCollection },
+    { id: "new-in", label: "New In", to: "/shop?collection=new-in", checkActive: () => activeCollection === "new-in" },
+    { id: "top-deals", label: "Top Deals", to: "/shop?collection=top-deals", checkActive: () => activeCollection === "top-deals" },
+    ...categoryOrder.map((cat) => {
+      const slug = cat.toLowerCase().replace(/\s+/g, "-");
+      return {
+        id: `cat-${slug}`,
+        label: cat,
+        to: `/shop?category=${slug}`,
+        checkActive: () => activeCategory === slug || location.pathname === `/category/${slug}`,
+      };
+    }),
+    { id: "flash-club", label: "Flash Club", to: "/flash-club", badge: "NEW", checkActive: () => location.pathname === "/flash-club" },
+  ];
 
   return <div className="storefront" id="top">
     <header className="site-header">
@@ -51,12 +65,53 @@ export default function StorefrontLayout({ children }: { children: ReactNode }) 
         </div>
       </div>
       <nav className={`category-nav ${menuOpen ? "category-nav--open" : ""}`} aria-label="Primary navigation">
-        <div className="shell category-nav__inner">
-          <NavLink className={`all-categories ${!activeCategory && !activeCollection ? "is-active" : ""}`} to="/shop" onClick={() => setMenuOpen(false)}><Menu size={16} /> All Categories</NavLink>
-          <NavLink className={activeCollection === "new-in" ? "is-active" : ""} to="/shop?collection=new-in" onClick={() => setMenuOpen(false)}>New In</NavLink>
-          <NavLink className={activeCollection === "top-deals" ? "is-active" : ""} to="/shop?collection=top-deals" onClick={() => setMenuOpen(false)}>Top Deals</NavLink>
-          {categoryOrder.map((category) => { const slug = category.toLowerCase().replace(/\s+/g, "-"); return <NavLink className={activeCategory === slug ? "is-active" : ""} key={category} to={categoryPath(category)} onClick={() => setMenuOpen(false)}>{category}</NavLink>; })}
-          <NavLink className="club-nav" to="/flash-club" onClick={() => setMenuOpen(false)}>Flash Club <span>NEW</span></NavLink>
+        <div className="shell category-nav__inner flex items-center gap-7 overflow-x-auto py-2 relative" style={{ gap: "28px" }}>
+          {navItems.map((item) => {
+            const isActive = item.checkActive();
+            return (
+              <NavLink
+                key={item.id}
+                to={item.to}
+                onClick={() => setMenuOpen(false)}
+                className={`relative px-4 py-2 rounded-xl text-xs md:text-sm font-semibold whitespace-nowrap transition-colors duration-150 inline-flex items-center gap-2 select-none ${
+                  isActive ? "text-[#0F1115] font-bold" : "text-[#4A4A4A] hover:text-[#0F1115]"
+                }`}
+                style={{ position: "relative", zIndex: isActive ? 2 : 1 }}
+              >
+                {isActive && (
+                  <motion.span
+                    layoutId="activeCategoryPill"
+                    style={{
+                      position: "absolute",
+                      inset: 0,
+                      backgroundColor: "#CCFF00",
+                      borderRadius: "12px",
+                      zIndex: -1,
+                    }}
+                    transition={{ type: "spring", stiffness: 300, damping: 24 }}
+                  />
+                )}
+                {item.icon}
+                <span>{item.label}</span>
+                {item.badge && (
+                  <span
+                    style={{
+                      display: "inline-flex",
+                      padding: "2px 6px",
+                      borderRadius: "4px",
+                      backgroundColor: isActive ? "#0F1115" : "#CCFF00",
+                      color: isActive ? "#CCFF00" : "#0F1115",
+                      fontSize: "9px",
+                      fontWeight: 800,
+                      marginLeft: "4px",
+                    }}
+                  >
+                    {item.badge}
+                  </span>
+                )}
+              </NavLink>
+            );
+          })}
         </div>
       </nav>
     </header>
