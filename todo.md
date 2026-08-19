@@ -1,0 +1,26 @@
+- [x] Establish reusable commerce data, client-side persistence, global navigation, and shared storefront shell.
+- [x] Build the catalog, category filtering, product quick view, and product-detail experiences.
+- [x] Implement cart, wishlist, checkout, order confirmation, account, orders, and Flash Club flows.
+- [x] Connect homepage actions to the commerce routes and validate desktop and mobile interactions.
+- [x] Save an independent checkpoint after final quality checks.
+- [x] Remove seeded transactional orders and addresses so new visitors start with clean local state.
+- [x] Add browser-local authentication state with login, registration, OTP, password, and account persistence flows.
+- [x] Update header, account, orders, and wishlist views for authenticated and empty-state experiences.
+- [x] Validate responsive routes and save the clean-state authentication checkpoint.
+- [x] Add a realistic local Google account-selection flow with profile, email, avatar, and persistent session data.
+- [x] Finalize fixed-code OTP verification, local credential registration and sign-in, loading states, and password reset simulation.
+- [x] Guard checkout for guests and expand account dropdown actions while preserving active cart state and redirect intent.
+- [x] Validate authentication transitions, responsive routes, and save the advanced authentication checkpoint.
+- [x] Add configurable official Google Identity Services with token decoding, browser-local session hydration, and graceful configuration fallback.
+- [x] Build Flash AI catalog discovery, policy answers, product cards, quick prompts, and main-search assistant handoff.
+- [x] Replace transient glass effects with solid Flash alerts, sheets, and assistant surfaces.
+- [x] Validate responsive AI and identity flows, preserve storefront visuals, and save the Google Identity and Flash AI checkpoint.
+- [x] Replace the inactive Google configuration state with an active browser-local account chooser and hydrate selected account data.
+- [x] Personalize phone and email signup state with captured names and preserve OTP verification behavior.
+- [x] Route all category navigation through dynamic catalog filters, deals, new-in state, breadcrumbs, and result counts.
+- [x] Expand the local mock catalog to 35-plus products using product metadata that avoids fabricated user reviews or ratings.
+- [x] Validate responsive authentication and category flows, then save the dynamic storefront checkpoint.
+- [x] Add color-aware product variants with named labels, distinct galleries, dynamic SKUs, and cart payload propagation.
+- [x] Replace duplicate gallery media with dedicated multi-angle product imagery across the Flash catalog.
+- [x] Add GPU-friendly product, cart, quantity, wishlist, and delivery-feedback motion without changing Flash visual tokens.
+- [x] Validate product, cart, checkout, desktop, and mobile interactions, then save the product-experience checkpoint.

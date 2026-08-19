@@ -1,0 +1,21 @@
+/*
+ * Design reminder — Flash Auth & Commerce Runway:
+ * Obsidian carries structure; Flash Volt accelerates actions, bolt marks, and deal signals only.
+ */
+.register-intro { background:#f4f4f0; }
+.register-intro::after { right:-82px; bottom:-88px; background:#0f1115; box-shadow:0 0 0 24px #dbdbd5; }
+.register-intro__bolt { position:relative; z-index:2; display:grid; place-items:center; width:48px; height:48px; margin-bottom:22px; border-radius:15px; background:#0f1115; color:#e2f800; }
+.register-intro__bolt svg { width:28px; height:28px; }
+.register-intro .eyebrow { position:relative; z-index:1; }
+.cart-empty-runway { display:grid; grid-template-columns:.8fr 1.2fr; overflow:hidden; margin-top:26px; border:1px solid #deded8; border-radius:25px; background:#fff; box-shadow:0 16px 30px rgba(15,17,21,.06); }
+.cart-empty-runway aside { position:relative; overflow:hidden; padding:43px 34px; background:#0f1115; color:#fff; }
+.cart-empty-runway aside::after { position:absolute; right:-104px; bottom:-104px; width:280px; height:280px; border:1px solid rgba(226,248,0,.5); border-radius:50%; box-shadow:0 0 0 37px rgba(226,248,0,.06); content:""; }
+.cart-empty-runway aside > span { position:relative; z-index:1; display:grid; place-items:center; width:43px; height:43px; border-radius:13px; background:#e2f800; color:#111; }
+.cart-empty-runway aside h2 { position:relative; z-index:1; margin:20px 0 10px; font:700 42px/.86 "Space Grotesk",sans-serif; letter-spacing:-2px; }
+.cart-empty-runway aside h2 em { color:#e2f800; font-style:normal; }
+.cart-empty-runway aside > p:not(.eyebrow) { position:relative; z-index:1; max-width:240px; margin:0; color:#d1d2cc; font-size:11px; line-height:1.5; }
+.cart-empty-runway > div { display:flex; flex-direction:column; align-items:flex-start; justify-content:center; padding:45px 40px; }
+.cart-empty-runway > div > svg { color:#718400; }
+.cart-empty-runway > div h2 { margin:9px 0 7px; font:700 34px/.92 "Space Grotesk",sans-serif; letter-spacing:-1.4px; }
+.cart-empty-runway > div > p:not(.eyebrow) { margin:0 0 19px; color:#666; font-size:12px; }
+@media (max-width:760px) { .cart-empty-runway { display:block; margin-top:19px; }.cart-empty-runway aside { padding:28px 23px; }.cart-empty-runway aside h2 { font-size:35px; }.cart-empty-runway > div { padding:32px 23px; }.register-intro__bolt { margin-bottom:16px; } }
