@@ -27,10 +27,10 @@ export type Product = {
 };
 
 const generated = {
-  headphones: "/manus-storage/flash-wireless-headphones_6f2bbc10.png",
-  watch: "/manus-storage/flash-smartwatch_9c6fbc05.png",
-  camera: "/manus-storage/flash-camera_71e9e9d4.png",
-  sneaker: "/manus-storage/flash-sneaker_316d488e.png",
+  headphones: "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=800&auto=format&fit=crop&q=80",
+  watch: "https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=800&auto=format&fit=crop&q=80",
+  camera: "https://images.unsplash.com/photo-1516035069371-29a1b244cc32?w=800&auto=format&fit=crop&q=80",
+  sneaker: "https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=800&auto=format&fit=crop&q=80",
 };
 
 const photo = (id: string) => "https://images.unsplash.com/" + id + "?auto=format&fit=crop&w=1000&q=85";
