@@ -41,7 +41,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const requestOtp = useCallback((phone: string) => /^\d{10}$/.test(phone.replace(/\D/g, "")), []);
   const verifyOtp = useCallback((phone: string, otp: string) => {
     const normalizedPhone = phone.replace(/\D/g, "");
-    if (!/^\d{10}$/.test(normalizedPhone) || otp !== "123456") return false;
+    if (!/^\d{10}$/.test(normalizedPhone) || !/^\d{6}$/.test(otp)) return false;
     const known = phoneProfiles.find((profile) => profile.phone === normalizedPhone);
     if (!known) return "new";
     setUser({ id: `phone-${normalizedPhone}`, name: known.name, phone: `+91 ${normalizedPhone}`, avatar: known.avatar, flashClub: known.flashClub, provider: "phone" });
