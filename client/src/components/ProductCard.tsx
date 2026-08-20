@@ -1,6 +1,6 @@
 /**
  * Flash product card — a high-key editorial product stage with concise obsidian data,
- * multi-image hover crossfade with Framer Motion, and unified brand green action signals.
+ * multi-angle hover crossfade with Framer Motion, color swatch switching, and unified brand green action signals.
  */
 import { useEffect, useRef, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
@@ -20,7 +20,17 @@ export default function ProductCard({
   const { addToCart, toggleWishlist, wishlistIds } = useCommerce();
   const isSaved = wishlistIds.includes(product.id);
 
-  const gallery = product.gallery && product.gallery.length > 0 ? product.gallery : [product.image];
+  // Selected color swatch state
+  const [selectedColor, setSelectedColor] = useState<string | null>(product.colors?.[0] ?? null);
+  const activeVariant = product.variants?.find((v) => v.color === selectedColor) ?? product.variants?.[0];
+
+  // Active gallery pool based on selected color variant or default product gallery
+  const activeGallery = activeVariant?.gallery && activeVariant.gallery.length > 0
+    ? activeVariant.gallery
+    : product.gallery && product.gallery.length > 0
+      ? product.gallery
+      : [product.image];
+
   const [activeImageIndex, setActiveImageIndex] = useState(0);
   const [isHovered, setIsHovered] = useState(false);
 
@@ -31,18 +41,18 @@ export default function ProductCard({
     if (debounceTimerRef.current) clearTimeout(debounceTimerRef.current);
     if (cycleIntervalRef.current) clearInterval(cycleIntervalRef.current);
 
-    // 250ms debounce delay to avoid accidental triggers
+    // 200ms debounce delay to prevent jumpy hover states
     debounceTimerRef.current = setTimeout(() => {
       setIsHovered(true);
-      if (gallery.length > 1) {
+      if (activeGallery.length > 1) {
         setActiveImageIndex(1);
       }
 
-      // Automatically cycle through remaining images if hovering for > 1.8s
+      // Smoothly cycle through alternative angles of the exact product
       cycleIntervalRef.current = setInterval(() => {
-        setActiveImageIndex((prevIndex) => (prevIndex + 1) % gallery.length);
-      }, 1800);
-    }, 250);
+        setActiveImageIndex((prevIndex) => (prevIndex + 1) % activeGallery.length);
+      }, 1500);
+    }, 200);
   };
 
   const handleMouseLeave = () => {
@@ -65,11 +75,11 @@ export default function ProductCard({
     };
   }, []);
 
-  const currentImageUrl = gallery[activeImageIndex] || product.image;
+  const currentImageUrl = activeGallery[activeImageIndex] || activeVariant?.image || product.image;
 
   return (
     <article
-      className="commerce-product-card"
+      className="commerce-product-card group"
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
     >
@@ -98,7 +108,7 @@ export default function ProductCard({
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            transition={{ duration: 0.25, ease: "easeInOut" }}
+            transition={{ duration: 0.3, ease: "easeInOut" }}
             style={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center" }}
           >
             <motion.div
@@ -113,7 +123,48 @@ export default function ProductCard({
       </Link>
 
       <div className="commerce-product-card__detail">
-        <p>{product.brand}</p>
+        <div className="flex items-center justify-between">
+          <p className="text-[11px] font-semibold text-gray-500 uppercase tracking-wider">{product.brand}</p>
+
+          {/* Interactive Color Swatch Dots */}
+          {product.colors && product.colors.length > 0 && (
+            <div className="flex items-center gap-1">
+              {product.colors.slice(0, 4).map((colorHex) => {
+                const isSelected = selectedColor === colorHex;
+                return (
+                  <button
+                    key={colorHex}
+                    type="button"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      setSelectedColor(colorHex);
+                      setActiveImageIndex(0);
+                    }}
+                    onMouseEnter={(e) => {
+                      e.stopPropagation();
+                      setSelectedColor(colorHex);
+                      setActiveImageIndex(0);
+                    }}
+                    className={`w-3 h-3 rounded-full border transition-all duration-150 ${
+                      isSelected
+                        ? "ring-2 ring-[#0F1115] ring-offset-1 scale-110 border-transparent shadow-sm"
+                        : "border-gray-300 hover:scale-110"
+                    }`}
+                    style={{ backgroundColor: colorHex }}
+                    aria-label={`Select ${colorHex} color`}
+                  />
+                );
+              })}
+              {product.colors.length > 4 && (
+                <span className="text-[9px] text-gray-400 font-semibold ml-0.5">
+                  +{product.colors.length - 4}
+                </span>
+              )}
+            </div>
+          )}
+        </div>
+
         <Link to={`/product/${product.id}`}>
           <h3>{product.name}</h3>
         </Link>

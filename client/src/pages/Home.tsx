@@ -1,10 +1,11 @@
 /**
  * Flash homepage — Supercharged Editorial Commerce in its primary form: a paper-white runway,
- * assertive Space Grotesk headlines, and Flash Volt as a scarce signal for action and savings.
+ * assertive Space Grotesk headlines, dynamic category ribbon, live running countdown timer,
+ * and Flash Volt as a scarce signal for action and savings.
  */
 import { useEffect, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import { ArrowRight, BadgeCheck, ChevronRight, Headphones, Sparkles, Truck, Undo2, Zap } from "lucide-react";
+import { ArrowRight, BadgeCheck, Briefcase, ChevronRight, Cpu, Dumbbell, Footprints, Headphones, Home as HomeIcon, Shirt, Sparkles, Truck, Undo2, Watch, Zap } from "lucide-react";
 import { Link } from "react-router-dom";
 import ProductCard from "@/components/ProductCard";
 import SafeImage from "@/components/common/SafeImage";
@@ -18,6 +19,28 @@ export default function Home() {
   const [currentSlide, setCurrentSlide] = useState(0);
   const [isHovered, setIsHovered] = useState(false);
 
+  // Requirement 3: Live Running "Offers Refresh In:" Countdown Timer
+  const [timeLeft, setTimeLeft] = useState({ hours: 8, minutes: 46, seconds: 32 });
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setTimeLeft((prev) => {
+        if (prev.seconds > 0) {
+          return { ...prev, seconds: prev.seconds - 1 };
+        }
+        if (prev.minutes > 0) {
+          return { ...prev, minutes: 59, seconds: 59 };
+        }
+        if (prev.hours > 0) {
+          return { hours: prev.hours - 1, minutes: 59, seconds: 59 };
+        }
+        // When countdown reaches 00:00:00, automatically loop/reset back to 08:00:00
+        return { hours: 8, minutes: 0, seconds: 0 };
+      });
+    }, 1000);
+    return () => clearInterval(timer);
+  }, []);
+
   useEffect(() => {
     if (isHovered) return;
     const timer = setInterval(() => {
@@ -27,6 +50,10 @@ export default function Home() {
   }, [isHovered, heroProducts.length]);
 
   const activeProduct = heroProducts[currentSlide] ?? heroProducts[0];
+
+  const triggerSupport = () => {
+    window.dispatchEvent(new CustomEvent("flash-open-support"));
+  };
 
   return (
     <>
@@ -123,21 +150,22 @@ export default function Home() {
         </div>
       </section>
 
+      {/* Requirement 1: DYNAMIC CATEGORY ICONS UPGRADE (Center Category Ribbon) */}
       <section className="category-rail shell" aria-label="Shop by category">
         <div className="category-rail__track">
           {categoryOrder.map((category, index) => (
             <Link
-              className={`category-card category-card--${categoryArt[index]}`}
+              className="category-card group"
               to={`/shop?category=${categorySlug(category)}`}
               key={category}
             >
               <span className="category-art">
                 <CategoryGlyph type={categoryArt[index]} />
               </span>
-              <span>{category}</span>
+              <span className="category-label">{category}</span>
             </Link>
           ))}
-          <Link className="view-all-card" to="/shop">
+          <Link className="view-all-card group" to="/shop">
             <span>
               View<br />All
             </span>
@@ -177,15 +205,17 @@ export default function Home() {
           </p>
           <ChevronRight />
         </div>
-        <div className="benefit">
-          <span className="benefit-icon">
+
+        {/* Requirement 4: Support Route Pill Trigger */}
+        <div className="benefit cursor-pointer hover:bg-gray-100/60 transition-colors" onClick={triggerSupport}>
+          <span className="benefit-icon bg-[#0F1115] text-[#CCFF00]">
             <Headphones size={22} />
           </span>
           <p>
             <b>Support Route</b>
             <small>Help is always in reach</small>
           </p>
-          <ChevronRight />
+          <ChevronRight className="text-[#CCFF00]" />
         </div>
       </section>
 
@@ -195,18 +225,21 @@ export default function Home() {
             <p className="eyebrow">Today’s pace</p>
             <h2 id="deals-title">Best deals right now</h2>
           </div>
-          <div className="deal-timer desktop-only">
+
+          {/* Requirement 3: LIVE RUNNING COUNTDOWN TIMER */}
+          <div className="deal-timer">
             <span>Offers refresh in:</span>
             <b>
-              08<small>Hrs</small>
+              {String(timeLeft.hours).padStart(2, "0")}<small>Hrs</small>
             </b>
             <b>
-              46<small>Min</small>
+              {String(timeLeft.minutes).padStart(2, "0")}<small>Min</small>
             </b>
             <b>
-              32<small>Secs</small>
+              {String(timeLeft.seconds).padStart(2, "0")}<small>Secs</small>
             </b>
           </div>
+
           <Link className="black-button" to="/shop?collection=top-deals">
             View all deals <ArrowRight size={16} />
           </Link>
@@ -284,12 +317,16 @@ export default function Home() {
 }
 
 function CategoryGlyph({ type }: { type: string }) {
-  if (type === "camera") return <span className="glyph-camera"><i /></span>;
-  if (type === "hoodie") return <span className="glyph-hoodie" />;
-  if (type === "shoe") return <span className="glyph-shoe" />;
-  if (type === "watch") return <span className="glyph-watch" />;
-  if (type === "chair") return <span className="glyph-chair" />;
-  if (type === "scent") return <span className="glyph-scent" />;
-  if (type === "ball") return <span className="glyph-ball" />;
-  return <span className="glyph-bag" />;
+  return (
+    <div className="w-14 h-14 rounded-2xl bg-[#0F1115] border border-[#CCFF00]/30 flex items-center justify-center text-[#CCFF00] shadow-md shadow-[#CCFF00]/10 transition-all duration-300 group-hover:scale-110 group-hover:bg-[#CCFF00] group-hover:text-[#0F1115] group-hover:border-[#CCFF00] group-hover:shadow-[0_0_20px_rgba(204,255,0,0.5)]">
+      {type === "camera" && <Cpu size={26} strokeWidth={2.2} />}
+      {type === "hoodie" && <Shirt size={26} strokeWidth={2.2} />}
+      {type === "shoe" && <Footprints size={26} strokeWidth={2.2} />}
+      {type === "watch" && <Watch size={26} strokeWidth={2.2} />}
+      {type === "chair" && <HomeIcon size={26} strokeWidth={2.2} />}
+      {type === "scent" && <Sparkles size={26} strokeWidth={2.2} />}
+      {type === "ball" && <Dumbbell size={26} strokeWidth={2.2} />}
+      {type === "bag" && <Briefcase size={26} strokeWidth={2.2} />}
+    </div>
+  );
 }

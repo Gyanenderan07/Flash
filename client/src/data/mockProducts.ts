@@ -43,8 +43,7 @@ const anglePool = [
 ];
 const fourAngles = (index: number, gallery: string[]) => {
   const distinct = Array.from(new Set(gallery));
-  for (let offset = 0; distinct.length < 4; offset += 1) distinct.push(`${stage(anglePool[(index * 3 + offset) % anglePool.length])}&flash_angle=${index}-${offset}`);
-  return distinct.slice(0, 4);
+  return distinct;
 };
 
 export const categoryOrder: ProductCategory[] = [
