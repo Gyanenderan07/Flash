@@ -60,7 +60,7 @@ export default function GoogleIdentityButton({
       // Initialize official Google OAuth 2.0 popup token client
       const client = google.accounts.oauth2.initTokenClient({
         client_id: clientId,
-        scope: "https://www.googleapis.com/auth/userinfo.profile https://www.googleapis.com/auth/userinfo.email openid",
+        scope: "openid email profile",
         callback: async (tokenResponse: any) => {
           if (tokenResponse && tokenResponse.access_token) {
             try {
@@ -84,6 +84,18 @@ export default function GoogleIdentityButton({
                 avatar: profile.picture || `https://api.dicebear.com/9.x/personas/svg?seed=${encodeURIComponent(profile.email || "user")}&backgroundColor=e2f800`,
               };
 
+              const flashUserStorage = {
+                ...activeUser,
+                isLoggedIn: true,
+                provider: "google",
+              };
+
+              try {
+                localStorage.setItem("flash_user", JSON.stringify(flashUserStorage));
+              } catch (e) {
+                console.error("Storage error:", e);
+              }
+
               signInWithGoogleProfile(activeUser);
               toast.success(`Welcome to Flash, ${activeUser.name.split(" ")[0]}.`);
               onSuccess?.();
@@ -99,7 +111,7 @@ export default function GoogleIdentityButton({
         },
         error_callback: (err: any) => {
           console.error("Google OAuth Popup Error:", err);
-          toast.error("Google sign-in was cancelled or failed to open.");
+          toast.error("Google sign-in was cancelled or blocked.");
           setIsLoading(false);
         },
       });
