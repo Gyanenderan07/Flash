@@ -1,30 +1,310 @@
 /**
  * Flash auth panel — compact, solid Flash controls support email credentials, named phone signup,
- * fixed-demo OTP verification, and configurable Google Identity or an explicit local fallback chooser.
+ * fixed-demo OTP verification, official Google Identity, and official Sign in with Apple.
  */
 import { useCallback, useEffect, useState } from "react";
-import { Apple, ArrowRight, CheckCircle2, Eye, EyeOff, LoaderCircle, LockKeyhole, Mail, Phone, RefreshCw, ShieldCheck, UserRound } from "lucide-react";
+import { ArrowRight, CheckCircle2, Eye, EyeOff, LoaderCircle, LockKeyhole, Mail, Phone, RefreshCw, ShieldCheck, UserRound } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { InputOTP, InputOTPGroup, InputOTPSlot } from "@/components/ui/input-otp";
-import { useAuth, type GoogleProfile } from "@/contexts/AuthContext";
+import { useAuth } from "@/contexts/AuthContext";
 import GoogleIdentityButton from "@/components/GoogleIdentityButton";
+import AppleIdentityButton from "@/components/AppleIdentityButton";
+
 const loadingLabel = (value: string) => <><LoaderCircle className="auth-spinner" size={17} /> {value}</>;
 
 export default function AuthPanel({ onComplete, redirectTo, oneTap = true }: { onComplete?: () => void; redirectTo?: string; oneTap?: boolean }) {
-  const navigate = useNavigate(); const { requestOtp, verifyOtp, completePhoneSignup, loginWithPassword, hydrateGoogleCredential, signInWithGoogleProfile, signInWithSocial } = useAuth();
-  const [method, setMethod] = useState<"phone" | "email">("phone"); const [phone, setPhone] = useState(""); const [otpSent, setOtpSent] = useState(false); const [otp, setOtp] = useState(""); const [newPhoneProfile, setNewPhoneProfile] = useState(false); const [fullName, setFullName] = useState(""); const [resendAt, setResendAt] = useState(0); const [email, setEmail] = useState(""); const [password, setPassword] = useState(""); const [showPassword, setShowPassword] = useState(false); const [remember, setRemember] = useState(true); const [loading, setLoading] = useState<"otp" | "verify" | "profile" | "email" | "google" | "apple" | null>(null); const [resetSent, setResetSent] = useState(false);
-  const finish = useCallback(() => { onComplete?.(); navigate(redirectTo?.startsWith("/") ? redirectTo : "/account"); }, [navigate, onComplete, redirectTo]);
-  useEffect(() => { if (!resendAt) return; const timer = window.setInterval(() => setResendAt((current) => Math.max(0, current - 1)), 1000); return () => window.clearInterval(timer); }, [resendAt]);
-  const sendOtp = () => { if (!requestOtp(phone)) { toast.error("Enter a valid 10-digit mobile number."); return; } setLoading("otp"); window.setTimeout(() => { setLoading(null); setOtpSent(true); setOtp(""); setNewPhoneProfile(false); setResendAt(30); toast.success("Demo OTP: 123456"); }, 420); };
-  const submitOtp = () => { if (otp.length !== 6) { toast.error("Enter the six-digit verification code."); return; } setLoading("verify"); window.setTimeout(() => { const verified = verifyOtp(phone, otp); setLoading(null); if (!verified) { toast.error("Use demo code 123456 to verify."); return; } if (verified === "new") { setNewPhoneProfile(true); toast.success("One quick detail and you are in."); return; } toast.success("You are in the Flash fast lane."); finish(); }, 380); };
-  const savePhoneProfile = () => { setLoading("profile"); window.setTimeout(() => { const saved = completePhoneSignup(phone, fullName); setLoading(null); if (!saved) { toast.error("Enter the name you want Flash to use."); return; } toast.success(`Welcome to Flash, ${fullName.trim().split(" ")[0]}.`); finish(); }, 340); };
-  const submitEmail = (event: React.FormEvent) => { event.preventDefault(); setLoading("email"); window.setTimeout(() => { const loggedIn = loginWithPassword(email, password); setLoading(null); if (!loggedIn) { toast.error("That email and password do not match a locally registered Flash account."); return; } toast.success(remember ? "Welcome back — this browser remembers you." : "Welcome back to Flash."); finish(); }, 420); };
-  const completeGoogle = useCallback((profile: GoogleProfile) => { setLoading("google"); window.setTimeout(() => { signInWithGoogleProfile(profile); setLoading(null); toast.success(`Welcome to Flash, ${profile.name.split(" ")[0]}.`); finish(); }, 220); }, [finish, signInWithGoogleProfile]);
-  const onGoogleCredential = useCallback((credential: string) => { setLoading("google"); window.setTimeout(() => { const hydrated = hydrateGoogleCredential(credential); setLoading(null); if (!hydrated) { toast.error("Google did not return a usable account credential."); return; } toast.success("Google account connected to Flash."); finish(); }, 240); }, [finish, hydrateGoogleCredential]);
-  const apple = () => { setLoading("apple"); window.setTimeout(() => { signInWithSocial("Apple"); setLoading(null); toast.success("Apple sign-in connected for this browser."); finish(); }, 420); };
-  const sendReset = () => { if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { setMethod("email"); toast.error("Enter your registered email first."); return; } setResetSent(true); toast.success("Password-reset simulation sent. Use your current local password to continue."); };
+  const navigate = useNavigate();
+  const { requestOtp, verifyOtp, completePhoneSignup, loginWithPassword } = useAuth();
+  const [method, setMethod] = useState<"phone" | "email">("phone");
+  const [phone, setPhone] = useState("");
+  const [otpSent, setOtpSent] = useState(false);
+  const [otp, setOtp] = useState("");
+  const [newPhoneProfile, setNewPhoneProfile] = useState(false);
+  const [fullName, setFullName] = useState("");
+  const [resendAt, setResendAt] = useState(0);
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
+  const [remember, setRemember] = useState(true);
+  const [loading, setLoading] = useState<"otp" | "verify" | "profile" | "email" | null>(null);
+  const [resetSent, setResetSent] = useState(false);
+
+  const finish = useCallback(() => {
+    onComplete?.();
+    navigate(redirectTo?.startsWith("/") ? redirectTo : "/account");
+  }, [navigate, onComplete, redirectTo]);
+
+  useEffect(() => {
+    if (!resendAt) return;
+    const timer = window.setInterval(() => setResendAt((current) => Math.max(0, current - 1)), 1000);
+    return () => window.clearInterval(timer);
+  }, [resendAt]);
+
+  const sendOtp = () => {
+    if (!requestOtp(phone)) {
+      toast.error("Enter a valid 10-digit mobile number.");
+      return;
+    }
+    setLoading("otp");
+    window.setTimeout(() => {
+      setLoading(null);
+      setOtpSent(true);
+      setOtp("");
+      setNewPhoneProfile(false);
+      setResendAt(30);
+      toast.success("Demo OTP: 123456");
+    }, 420);
+  };
+
+  const submitOtp = () => {
+    if (otp.length !== 6) {
+      toast.error("Enter the six-digit verification code.");
+      return;
+    }
+    setLoading("verify");
+    window.setTimeout(() => {
+      const verified = verifyOtp(phone, otp);
+      setLoading(null);
+      if (!verified) {
+        toast.error("Use demo code 123456 to verify.");
+        return;
+      }
+      if (verified === "new") {
+        setNewPhoneProfile(true);
+        toast.success("One quick detail and you are in.");
+        return;
+      }
+      toast.success("You are in the Flash fast lane.");
+      finish();
+    }, 380);
+  };
+
+  const savePhoneProfile = () => {
+    setLoading("profile");
+    window.setTimeout(() => {
+      const saved = completePhoneSignup(phone, fullName);
+      setLoading(null);
+      if (!saved) {
+        toast.error("Enter the name you want Flash to use.");
+        return;
+      }
+      toast.success(`Welcome to Flash, ${fullName.trim().split(" ")[0]}.`);
+      finish();
+    }, 340);
+  };
+
+  const submitEmail = (event: React.FormEvent) => {
+    event.preventDefault();
+    setLoading("email");
+    window.setTimeout(() => {
+      const loggedIn = loginWithPassword(email, password);
+      setLoading(null);
+      if (!loggedIn) {
+        toast.error("That email and password do not match a locally registered Flash account.");
+        return;
+      }
+      toast.success(remember ? "Welcome back — this browser remembers you." : "Welcome back to Flash.");
+      finish();
+    }, 420);
+  };
+
+  const sendReset = () => {
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      setMethod("email");
+      toast.error("Enter your registered email first.");
+      return;
+    }
+    setResetSent(true);
+    toast.success("Password-reset simulation sent. Use your current local password to continue.");
+  };
+
   const registerUrl = redirectTo ? `/register?redirect=${encodeURIComponent(redirectTo)}` : "/register";
-  const otpStep = !otpSent ? <><label className="auth-field">Mobile number<div className="phone-field"><span>+91</span><input autoComplete="tel" inputMode="numeric" maxLength={10} value={phone} onChange={(event) => setPhone(event.target.value.replace(/\D/g, ""))} placeholder="10-digit mobile number" /></div></label><button className="lime-button auth-primary" disabled={loading !== null} onClick={sendOtp}>{loading === "otp" ? loadingLabel("Requesting OTP") : <>Request OTP <ArrowRight size={18} /></>}</button></> : newPhoneProfile ? <><div className="otp-intro"><CheckCircle2 size={18} /><span>Mobile verified. Make it yours.</span></div><label className="auth-field">Full name<div className="input-icon-field"><UserRound size={17} /><input autoFocus autoComplete="name" value={fullName} onChange={(event) => setFullName(event.target.value)} placeholder="How should Flash call you?" /></div></label><button className="lime-button auth-primary" disabled={loading !== null} onClick={savePhoneProfile}>{loading === "profile" ? loadingLabel("Saving profile") : <>Enter Flash <ArrowRight size={18} /></>}</button></> : <><div className="otp-intro"><CheckCircle2 size={18} /><span>Demo code <b>123456</b> sent to <b>+91 {phone}</b><button onClick={() => setOtpSent(false)}>Edit</button></span></div><label className="auth-field">Enter your 6-digit code</label><InputOTP autoFocus maxLength={6} value={otp} onChange={setOtp} containerClassName="auth-otp"><InputOTPGroup>{Array.from({ length: 6 }, (_, index) => <InputOTPSlot className="auth-otp-slot" key={index} index={index} />)}</InputOTPGroup></InputOTP><button className="lime-button auth-primary" disabled={loading !== null} onClick={submitOtp}>{loading === "verify" ? loadingLabel("Verifying") : <>Verify & continue <ArrowRight size={18} /></>}</button><p className="resend-copy">{resendAt ? `Resend OTP in 00:${String(resendAt).padStart(2, "0")}` : <button disabled={loading !== null} onClick={sendOtp}><RefreshCw size={14} /> Resend OTP</button>}</p></>;
-  return <section className="auth-panel"><div className="auth-panel__intro"><p className="eyebrow">Your fast lane</p><h1>Sign in.<br />Move faster.</h1><p>Pick up saved finds, follow your orders, and make every drop yours.</p></div><div className="auth-method-switch" role="tablist"><button role="tab" aria-selected={method === "phone"} className={method === "phone" ? "is-active" : ""} onClick={() => setMethod("phone")}><Phone size={15} /> Phone / OTP</button><button role="tab" aria-selected={method === "email"} className={method === "email" ? "is-active" : ""} onClick={() => setMethod("email")}><Mail size={15} /> Email</button></div>{method === "phone" ? <div className="auth-flow">{otpStep}</div> : <form className="auth-flow" onSubmit={submitEmail}><label className="auth-field">Registered email address<div className="input-icon-field"><Mail size={17} /><input autoComplete="email" type="email" value={email} onChange={(event) => { setEmail(event.target.value); setResetSent(false); }} placeholder="you@example.com" /></div></label><label className="auth-field">Password<div className="input-icon-field"><LockKeyhole size={17} /><input autoComplete="current-password" type={showPassword ? "text" : "password"} value={password} onChange={(event) => setPassword(event.target.value)} placeholder="Enter your password" /><button type="button" aria-label={showPassword ? "Hide password" : "Show password"} onClick={() => setShowPassword((current) => !current)}>{showPassword ? <EyeOff size={17} /> : <Eye size={17} />}</button></div></label><div className="auth-options"><label><input type="checkbox" checked={remember} onChange={(event) => setRemember(event.target.checked)} /> Remember me</label><button type="button" onClick={sendReset}>Forgot password?</button></div>{resetSent && <p className="reset-sent"><ShieldCheck size={14} /> Reset simulation sent for this local account.</p>}<button className="lime-button auth-primary" disabled={loading !== null} type="submit">{loading === "email" ? loadingLabel("Signing in") : <>Sign in <ArrowRight size={18} /></>}</button></form>}<div className="auth-divider"><span>or continue with</span></div><div className="social-auth social-auth--gis"><GoogleIdentityButton onCredential={onGoogleCredential} onProfile={completeGoogle} oneTap={oneTap} /><button disabled={loading !== null} onClick={apple}>{loading === "apple" ? loadingLabel("Connecting") : <><Apple size={17} fill="currentColor" /> Apple</>}</button></div><p className="auth-switch">New to Flash? <Link to={registerUrl} onClick={onComplete}>Create an account</Link></p></section>;
+
+  const otpStep = !otpSent ? (
+    <>
+      <label className="auth-field">
+        Mobile number
+        <div className="phone-field">
+          <span>+91</span>
+          <input
+            autoComplete="tel"
+            inputMode="numeric"
+            maxLength={10}
+            value={phone}
+            onChange={(event) => setPhone(event.target.value.replace(/\D/g, ""))}
+            placeholder="10-digit mobile number"
+          />
+        </div>
+      </label>
+      <button className="lime-button auth-primary" disabled={loading !== null} onClick={sendOtp}>
+        {loading === "otp" ? loadingLabel("Requesting OTP") : <>Request OTP <ArrowRight size={18} /></>}
+      </button>
+    </>
+  ) : newPhoneProfile ? (
+    <>
+      <div className="otp-intro">
+        <CheckCircle2 size={18} />
+        <span>Mobile verified. Make it yours.</span>
+      </div>
+      <label className="auth-field">
+        Full name
+        <div className="input-icon-field">
+          <UserRound size={17} />
+          <input
+            autoFocus
+            autoComplete="name"
+            value={fullName}
+            onChange={(event) => setFullName(event.target.value)}
+            placeholder="How should Flash call you?"
+          />
+        </div>
+      </label>
+      <button className="lime-button auth-primary" disabled={loading !== null} onClick={savePhoneProfile}>
+        {loading === "profile" ? loadingLabel("Saving profile") : <>Enter Flash <ArrowRight size={18} /></>}
+      </button>
+    </>
+  ) : (
+    <>
+      <div className="otp-intro">
+        <CheckCircle2 size={18} />
+        <span>
+          Demo code <b>123456</b> sent to <b>+91 {phone}</b>
+          <button onClick={() => setOtpSent(false)}>Edit</button>
+        </span>
+      </div>
+      <label className="auth-field">Enter your 6-digit code</label>
+      <InputOTP autoFocus maxLength={6} value={otp} onChange={setOtp} containerClassName="auth-otp">
+        <InputOTPGroup>
+          {Array.from({ length: 6 }, (_, index) => (
+            <InputOTPSlot className="auth-otp-slot" key={index} index={index} />
+          ))}
+        </InputOTPGroup>
+      </InputOTP>
+      <button className="lime-button auth-primary" disabled={loading !== null} onClick={submitOtp}>
+        {loading === "verify" ? loadingLabel("Verifying") : <>Verify & continue <ArrowRight size={18} /></>}
+      </button>
+      <p className="resend-copy">
+        {resendAt ? (
+          `Resend OTP in 00:${String(resendAt).padStart(2, "0")}`
+        ) : (
+          <button disabled={loading !== null} onClick={sendOtp}>
+            <RefreshCw size={14} /> Resend OTP
+          </button>
+        )}
+      </p>
+    </>
+  );
+
+  return (
+    <section className="auth-panel">
+      <div className="auth-panel__intro">
+        <p className="eyebrow">Your fast lane</p>
+        <h1>
+          Sign in.
+          <br />
+          Move faster.
+        </h1>
+        <p>Pick up saved finds, follow your orders, and make every drop yours.</p>
+      </div>
+
+      <div className="auth-method-switch" role="tablist">
+        <button
+          role="tab"
+          aria-selected={method === "phone"}
+          className={method === "phone" ? "is-active" : ""}
+          onClick={() => setMethod("phone")}
+        >
+          <Phone size={15} /> Phone / OTP
+        </button>
+        <button
+          role="tab"
+          aria-selected={method === "email"}
+          className={method === "email" ? "is-active" : ""}
+          onClick={() => setMethod("email")}
+        >
+          <Mail size={15} /> Email
+        </button>
+      </div>
+
+      {method === "phone" ? (
+        <div className="auth-flow">{otpStep}</div>
+      ) : (
+        <form className="auth-flow" onSubmit={submitEmail}>
+          <label className="auth-field">
+            Registered email address
+            <div className="input-icon-field">
+              <Mail size={17} />
+              <input
+                autoComplete="email"
+                type="email"
+                value={email}
+                onChange={(event) => {
+                  setEmail(event.target.value);
+                  setResetSent(false);
+                }}
+                placeholder="you@example.com"
+              />
+            </div>
+          </label>
+
+          <label className="auth-field">
+            Password
+            <div className="input-icon-field">
+              <LockKeyhole size={17} />
+              <input
+                autoComplete="current-password"
+                type={showPassword ? "text" : "password"}
+                value={password}
+                onChange={(event) => setPassword(event.target.value)}
+                placeholder="Enter your password"
+              />
+              <button
+                type="button"
+                aria-label={showPassword ? "Hide password" : "Show password"}
+                onClick={() => setShowPassword((current) => !current)}
+              >
+                {showPassword ? <EyeOff size={17} /> : <Eye size={17} />}
+              </button>
+            </div>
+          </label>
+
+          <div className="auth-options">
+            <label>
+              <input type="checkbox" checked={remember} onChange={(event) => setRemember(event.target.checked)} /> Remember me
+            </label>
+            <button type="button" onClick={sendReset}>
+              Forgot password?
+            </button>
+          </div>
+
+          {resetSent && (
+            <p className="reset-sent">
+              <ShieldCheck size={14} /> Reset simulation sent for this local account.
+            </p>
+          )}
+
+          <button className="lime-button auth-primary" disabled={loading !== null} type="submit">
+            {loading === "email" ? loadingLabel("Signing in") : <>Sign in <ArrowRight size={18} /></>}
+          </button>
+        </form>
+      )}
+
+      <div className="auth-divider">
+        <span>or continue with</span>
+      </div>
+
+      <div className="social-auth social-auth--gis">
+        <GoogleIdentityButton onSuccess={finish} oneTap={oneTap} />
+        <AppleIdentityButton onSuccess={finish} />
+      </div>
+
+      <p className="auth-switch">
+        New to Flash?{" "}
+        <Link to={registerUrl} onClick={onComplete}>
+          Create an account
+        </Link>
+      </p>
+    </section>
+  );
 }

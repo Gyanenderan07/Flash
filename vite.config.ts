@@ -203,7 +203,116 @@ function vitePluginStorageProxy(): Plugin {
   };
 }
 
-const plugins = [react(), tailwindcss(), jsxLocPlugin(), vitePluginManusRuntime(), vitePluginManusDebugCollector(), vitePluginStorageProxy()];
+function vitePluginAuthApi(): Plugin {
+  return {
+    name: "vite-plugin-auth-api",
+    configureServer(server: ViteDevServer) {
+      server.middlewares.use(async (req, res, next) => {
+        if (!req.url?.startsWith("/api/auth/")) return next();
+
+        let body = "";
+        req.on("data", (chunk) => {
+          body += chunk.toString();
+        });
+
+        req.on("end", async () => {
+          try {
+            const data = body ? JSON.parse(body) : {};
+
+            if (req.url === "/api/auth/google" && req.method === "POST") {
+              const { credential } = data;
+              if (!credential || typeof credential !== "string") {
+                res.writeHead(400, { "Content-Type": "application/json" });
+                return res.end(JSON.stringify({ error: "Google credential token required" }));
+              }
+
+              const response = await fetch(`https://oauth2.googleapis.com/tokeninfo?id_token=${encodeURIComponent(credential)}`);
+              if (!response.ok) {
+                res.writeHead(401, { "Content-Type": "application/json" });
+                return res.end(JSON.stringify({ error: "Invalid Google credential" }));
+              }
+
+              const payload = await response.json();
+              if (!payload.sub || !payload.email) {
+                res.writeHead(401, { "Content-Type": "application/json" });
+                return res.end(JSON.stringify({ error: "Malformed Google credential payload" }));
+              }
+
+              res.writeHead(200, { "Content-Type": "application/json" });
+              return res.end(JSON.stringify({
+                user: {
+                  id: `google-${payload.sub}`,
+                  name: payload.name || payload.email.split("@")[0],
+                  email: payload.email,
+                  avatar: payload.picture || `https://api.dicebear.com/9.x/personas/svg?seed=${encodeURIComponent(payload.email)}&backgroundColor=e2f800`,
+                  flashClub: false,
+                  provider: "Google",
+                },
+              }));
+            }
+
+            if (req.url === "/api/auth/apple" && req.method === "POST") {
+              const { idToken, user } = data;
+              if (!idToken || typeof idToken !== "string") {
+                res.writeHead(400, { "Content-Type": "application/json" });
+                return res.end(JSON.stringify({ error: "Apple ID token required" }));
+              }
+
+              const parts = idToken.split(".");
+              if (parts.length !== 3) {
+                res.writeHead(400, { "Content-Type": "application/json" });
+                return res.end(JSON.stringify({ error: "Invalid JWT format" }));
+              }
+
+              const payloadRaw = Buffer.from(parts[1], "base64").toString("utf-8");
+              const claims = JSON.parse(payloadRaw);
+
+              if (!claims.sub || claims.iss !== "https://appleid.apple.com") {
+                res.writeHead(401, { "Content-Type": "application/json" });
+                return res.end(JSON.stringify({ error: "Invalid Apple token claims" }));
+              }
+
+              if (claims.exp && claims.exp * 1000 < Date.now()) {
+                res.writeHead(401, { "Content-Type": "application/json" });
+                return res.end(JSON.stringify({ error: "Expired Apple token" }));
+              }
+
+              let fullName = "Apple User";
+              if (user && typeof user === "object") {
+                const first = user.name?.firstName || "";
+                const last = user.name?.lastName || "";
+                const constructed = `${first} ${last}`.trim();
+                if (constructed) fullName = constructed;
+              }
+
+              const email = claims.email || (user && user.email) || `apple.${claims.sub.slice(0, 8)}@privaterelay.appleid.com`;
+
+              res.writeHead(200, { "Content-Type": "application/json" });
+              return res.end(JSON.stringify({
+                user: {
+                  id: `apple-${claims.sub}`,
+                  name: fullName,
+                  email: email,
+                  avatar: `https://api.dicebear.com/9.x/personas/svg?seed=${encodeURIComponent(fullName)}&backgroundColor=e2f800`,
+                  flashClub: false,
+                  provider: "Apple",
+                },
+              }));
+            }
+
+            res.writeHead(404, { "Content-Type": "application/json" });
+            return res.end(JSON.stringify({ error: "Endpoint not found" }));
+          } catch (e) {
+            res.writeHead(500, { "Content-Type": "application/json" });
+            return res.end(JSON.stringify({ error: "Internal server error" }));
+          }
+        });
+      });
+    },
+  };
+}
+
+const plugins = [react(), tailwindcss(), jsxLocPlugin(), vitePluginManusRuntime(), vitePluginManusDebugCollector(), vitePluginStorageProxy(), vitePluginAuthApi()];
 
 export default defineConfig({
   plugins,
