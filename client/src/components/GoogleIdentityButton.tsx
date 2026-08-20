@@ -1,18 +1,18 @@
 /**
- * Flash Google Identity — Self-healing, dual-tier Google authentication pipeline.
- * Tier 1: Official GIS OAuth Popup when configured.
- * Tier 2: Resilient instant fallback when GIS is unconfigured/blocked/timed out.
+ * Flash Google Identity — Official Google Identity Services OAuth 2.0 Popup Integration.
+ * Uses initTokenClient to trigger Google's native account chooser popup dynamically.
  */
 import { useState } from "react";
 import { LoaderCircle } from "lucide-react";
 import { toast } from "sonner";
-import { useAuth, type GoogleProfile } from "@/contexts/AuthContext";
+import { useAuth } from "@/contexts/AuthContext";
 
 const GIS_SRC = "https://accounts.google.com/gsi/client";
+const DEFAULT_CLIENT_ID = "380835034980-1i5imfmnd5iamu6ih9akthqqvtna51n7.apps.googleusercontent.com";
 
 let scriptPromise: Promise<void> | null = null;
 function loadGoogleIdentity(): Promise<void> {
-  const existing = (window as any).google?.accounts?.id;
+  const existing = (window as any).google?.accounts?.oauth2;
   if (existing) return Promise.resolve();
   if (scriptPromise) return scriptPromise;
   scriptPromise = new Promise((resolve, reject) => {
@@ -42,90 +42,74 @@ export default function GoogleIdentityButton({
   const handleGoogleSignIn = async () => {
     setIsLoading(true);
 
-    const fallbackUser: GoogleProfile = {
-      id: "usr_" + Date.now(),
-      name: "Gyanenderan",
-      email: "gyanenderanthirumal1029@gmail.com",
-      avatar: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&auto=format&fit=crop&q=80",
-    };
-
-    let committed = false;
-    const commitLogin = (userData: GoogleProfile) => {
-      if (committed) return;
-      committed = true;
-      try {
-        localStorage.setItem("flash_user", JSON.stringify(userData));
-        signInWithGoogleProfile(userData);
-        toast.success(`Welcome to Flash, ${userData.name.split(" ")[0]}.`);
-      } catch (e) {
-        console.error("Storage error:", e);
-      } finally {
-        setIsLoading(false);
-        onSuccess?.();
-      }
-    };
-
-    // Safety timeout: Never let the button freeze or spin infinitely
-    const timeoutTimer = setTimeout(() => {
-      commitLogin(fallbackUser);
-    }, 2500);
-
     try {
       await loadGoogleIdentity();
       const rawClientId = import.meta.env.VITE_GOOGLE_CLIENT_ID as string | undefined;
+      const clientId = rawClientId && !rawClientId.includes("your-google-client-id")
+        ? rawClientId
+        : DEFAULT_CLIENT_ID;
+
       const google = (window as any).google;
 
-      const isConfigured = Boolean(
-        rawClientId &&
-          !rawClientId.includes("your-google-client-id") &&
-          !rawClientId.includes("flashapp.apps")
-      );
-
-      if (isConfigured && google?.accounts?.id) {
-        google.accounts.id.initialize({
-          client_id: rawClientId,
-          callback: (response: any) => {
-            clearTimeout(timeoutTimer);
-            try {
-              const base64Url = response.credential.split(".")[1];
-              const base64 = base64Url.replace(/-/g, "+").replace(/_/g, "/");
-              const jsonPayload = decodeURIComponent(
-                atob(base64)
-                  .split("")
-                  .map((c) => "%" + ("00" + c.charCodeAt(0).toString(16)).slice(-2))
-                  .join("")
-              );
-              const payload = JSON.parse(jsonPayload);
-
-              commitLogin({
-                id: payload.sub || fallbackUser.id,
-                name: payload.name || fallbackUser.name,
-                email: payload.email || fallbackUser.email,
-                avatar: payload.picture || fallbackUser.avatar,
-              });
-            } catch (err) {
-              commitLogin(fallbackUser);
-            }
-          },
-          error_callback: () => {
-            clearTimeout(timeoutTimer);
-            commitLogin(fallbackUser);
-          },
-        });
-
-        google.accounts.id.prompt((notification: any) => {
-          if (notification.isNotDisplayed() || notification.isSkippedMoment()) {
-            clearTimeout(timeoutTimer);
-            commitLogin(fallbackUser);
-          }
-        });
-      } else {
-        clearTimeout(timeoutTimer);
-        commitLogin(fallbackUser);
+      if (!google?.accounts?.oauth2) {
+        toast.error("Google Identity Services script not loaded in browser.");
+        setIsLoading(false);
+        return;
       }
+
+      // Initialize official Google OAuth 2.0 popup token client
+      const client = google.accounts.oauth2.initTokenClient({
+        client_id: clientId,
+        scope: "https://www.googleapis.com/auth/userinfo.profile https://www.googleapis.com/auth/userinfo.email openid",
+        callback: async (tokenResponse: any) => {
+          if (tokenResponse && tokenResponse.access_token) {
+            try {
+              // Fetch the real signed-in user's profile from Google
+              const res = await fetch("https://www.googleapis.com/oauth2/v3/userinfo", {
+                headers: { Authorization: `Bearer ${tokenResponse.access_token}` },
+              });
+
+              if (!res.ok) {
+                toast.error("Could not fetch user profile from Google.");
+                setIsLoading(false);
+                return;
+              }
+
+              const profile = await res.json();
+
+              const activeUser = {
+                id: profile.sub,
+                name: profile.name || profile.given_name || "Google User",
+                email: profile.email,
+                avatar: profile.picture || `https://api.dicebear.com/9.x/personas/svg?seed=${encodeURIComponent(profile.email || "user")}&backgroundColor=e2f800`,
+              };
+
+              signInWithGoogleProfile(activeUser);
+              toast.success(`Welcome to Flash, ${activeUser.name.split(" ")[0]}.`);
+              onSuccess?.();
+            } catch (err) {
+              console.error("Failed to fetch user profile:", err);
+              toast.error("An error occurred while signing in with Google.");
+            } finally {
+              setIsLoading(false);
+            }
+          } else {
+            setIsLoading(false);
+          }
+        },
+        error_callback: (err: any) => {
+          console.error("Google OAuth Popup Error:", err);
+          toast.error("Google sign-in was cancelled or failed to open.");
+          setIsLoading(false);
+        },
+      });
+
+      // Request access token -> Opens the official Google Account Chooser popup
+      client.requestAccessToken({ prompt: "select_account" });
     } catch (error) {
-      clearTimeout(timeoutTimer);
-      commitLogin(fallbackUser);
+      console.error("Google Sign-In Exception:", error);
+      toast.error("Could not initialize Google Sign-In.");
+      setIsLoading(false);
     }
   };
 
@@ -168,7 +152,7 @@ export default function GoogleIdentityButton({
           )}
         </div>
         <span className="gsi-material-button-contents text-sm font-semibold text-[#0F1115] tracking-tight">
-          {isLoading ? "Signing in..." : "Continue with Google"}
+          {isLoading ? "Opening Google..." : "Continue with Google"}
         </span>
       </button>
     </div>
