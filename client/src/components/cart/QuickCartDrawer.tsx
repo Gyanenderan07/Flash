@@ -121,28 +121,25 @@ export default function QuickCartDrawer({
               )}
             </div>
 
-            {/* Footer with Liquid Glassphysics "View Cart" CTA */}
-            <div className="p-5 border-t border-gray-100 bg-[#FAF9F6] space-y-4">
-              <div className="flex justify-between items-baseline">
-                <span className="text-xs font-bold uppercase tracking-wider text-gray-500">Subtotal</span>
-                <b className="text-xl font-black text-[#0F1115]">{formatINR(subtotal)}</b>
+            {/* Footer with High-Visibility "View Cart" CTA */}
+            <div className="border-t border-neutral-200 bg-white p-6 sticky bottom-0">
+              <div className="flex items-center justify-between mb-4">
+                <span className="text-sm text-neutral-500">Subtotal</span>
+                <span className="text-xl font-bold text-[#0F1115]">{formatINR(subtotal)}</span>
               </div>
-
-              {/* Liquid / Glassphysics "View Cart" Button */}
               <button
                 type="button"
+                className="relative w-full flex items-center justify-center gap-2 rounded-xl bg-[#D4F800] py-4 px-6 text-base font-bold text-[#0F1115] transition-colors hover:bg-[#C8E600] active:scale-[0.98] overflow-hidden group cursor-pointer"
                 onClick={handleViewCart}
-                className="relative w-full py-4 px-6 rounded-full bg-gradient-to-b from-[#D8FF1A] to-[#CCFF00] text-[#0F1115] font-black text-sm uppercase tracking-wider flex items-center justify-center gap-2 shadow-lg shadow-[#CCFF00]/20 hover:shadow-xl hover:shadow-[#CCFF00]/35 active:scale-[0.98] transition-all overflow-hidden group cursor-pointer"
               >
-                {/* Water Surface Top Glass Highlight */}
-                <div className="absolute inset-x-0 top-0 h-[45%] bg-gradient-to-b from-white/40 to-transparent rounded-t-full pointer-events-none" />
+                {/* Glossy / Liquid Water Surface Reflection */}
+                <div className="absolute inset-x-0 top-0 h-[45%] bg-gradient-to-b from-white/40 to-transparent rounded-t-xl pointer-events-none" />
 
-                {/* Interactive Liquid Shimmer Wave */}
-                <div className="absolute inset-0 -translate-x-full group-hover:translate-x-full transition-transform duration-700 ease-out bg-gradient-to-r from-transparent via-white/35 to-transparent rounded-full pointer-events-none" />
+                {/* Liquid Shimmer Light Reflection on Hover */}
+                <div className="absolute inset-0 -translate-x-full group-hover:translate-x-full transition-transform duration-700 ease-out bg-gradient-to-r from-transparent via-white/35 to-transparent pointer-events-none" />
 
-                {/* Button Content */}
-                <span className="relative z-10 font-black">View cart</span>
-                <span className="relative z-10 text-base font-bold transition-transform group-hover:translate-x-1 duration-200">&rarr;</span>
+                <span className="relative z-10 font-bold">View cart</span>
+                <span className="relative z-10 text-xl font-bold transition-transform group-hover:translate-x-1 duration-200">→</span>
               </button>
             </div>
           </motion.aside>
