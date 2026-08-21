@@ -1,23 +1,148 @@
 /**
- * Flash cart — a high-key checkout runway with crisp order math and Flash Volt only on
- * momentum-changing cart actions and shipping progress.
+ * Flash Cart Page — Editorial checkout runway featuring modular CartItem components,
+ * quantity stepper auto-remove logic, Framer Motion exit transitions, and glassmorphic OrderSummary.
  */
-import { useState } from "react";
-import { ArrowRight, Heart, Minus, Plus, ShoppingBag, Trash2, Truck, X, Zap } from "lucide-react";
-import { Link, useNavigate } from "react-router-dom";
+import { AnimatePresence } from "framer-motion";
+import { ArrowRight, ShoppingBag, Truck, Zap } from "lucide-react";
+import { Link } from "react-router-dom";
 import { useCommerce } from "@/contexts/CommerceContext";
 import { formatINR, getProduct } from "@/data/mockProducts";
-import { useAuth } from "@/contexts/AuthContext";
-import SafeImage from "@/components/common/SafeImage";
+import CartItem, { type CartLineItem } from "@/components/cart/CartItem";
+import OrderSummary from "@/components/cart/OrderSummary";
 
 export default function Cart() {
-  const navigate = useNavigate();
-  const { cart, subtotal, savings, couponDiscount, deliveryFee, total, couponCode, applyCoupon, clearCoupon, updateQuantity, removeFromCart, moveToWishlist } = useCommerce();
-  const { user } = useAuth();
-  const [code, setCode] = useState("");
-  const activeLines = cart.filter((line) => !line.saved).map((line) => ({ ...line, product: getProduct(line.productId) })).filter((line): line is typeof line & { product: NonNullable<ReturnType<typeof getProduct>> } => Boolean(line.product));
+  const {
+    cart,
+    subtotal,
+    savings,
+    couponDiscount,
+    deliveryFee,
+    total,
+    couponCode,
+    applyCoupon,
+    clearCoupon,
+    updateQuantity,
+    removeFromCart,
+    moveToWishlist,
+  } = useCommerce();
+
+  const activeLines: CartLineItem[] = cart
+    .filter((line) => !line.saved)
+    .map((line) => ({ ...line, product: getProduct(line.productId) }))
+    .filter(
+      (line): line is CartLineItem => Boolean(line.product)
+    );
+
   const deliveryGap = Math.max(0, 499 - subtotal);
-  return <section className="cart-page shell"><div className="page-title"><p className="eyebrow">Your fast lane</p><h1>Cart, in motion.</h1><p>Keep the good finds close. We’ll hold the pace from here.</p></div>
-    {activeLines.length ? <div className="cart-layout"><div className="cart-main"><div className="shipping-progress"><div><Truck size={20} /><span><b>{deliveryGap ? `Add ${formatINR(deliveryGap)} more for FREE Lightning Delivery.` : "Lightning Delivery unlocked."}</b><small>{deliveryGap ? "You’re almost at the free-delivery line." : "Your order has caught the fast lane."}</small></span></div><i><b style={{ width: `${Math.min(100, (subtotal / 499) * 100)}%` }} /></i></div><div className="cart-lines">{activeLines.map((line) => { const { product, quantity, color, colorName, size, variantSku, image } = line; const lineRef = { productId: product.id, color, size, variantSku }; return <article key={`${product.id}-${variantSku ?? color}-${size}`} className="cart-line"><Link to={`/product/${product.id}`} className="cart-line__media"><SafeImage src={image ?? product.image} alt={product.name} /></Link><div className="cart-line__copy"><p>{product.brand} / {product.subcategory}</p><Link to={`/product/${product.id}`}><h2>{product.name}</h2></Link><span>{[colorName ?? color, size, variantSku].filter(Boolean).join(" · ") || "Standard edit"}</span><b>{formatINR(product.price)}</b><del>{formatINR(product.mrp)}</del><div className="cart-line__utilities"><button onClick={() => moveToWishlist(lineRef)}><Heart size={15} /> Save for later</button><button onClick={() => removeFromCart(lineRef)}><Trash2 size={15} /> Remove</button></div></div><div className="quantity-stepper"><button onClick={() => updateQuantity(lineRef, quantity - 1)}><Minus size={15} /></button><span>{quantity}</span><button onClick={() => updateQuantity(lineRef, quantity + 1)}><Plus size={15} /></button></div></article>; })}</div><Link className="cart-continue" to="/shop"><ArrowRight size={17} /> Keep finding</Link></div>
-      <aside className="cart-summary"><h2>Order Summary</h2><div className="coupon-box"><p>Have a promo code?</p>{couponCode ? <div className="coupon-active"><b>{couponCode}</b><button onClick={clearCoupon}><X size={15} /> Remove</button></div> : <form onSubmit={(event) => { event.preventDefault(); if (applyCoupon(code)) setCode(""); }}><input value={code} onChange={(event) => setCode(event.target.value.toUpperCase())} placeholder="FLASH10" /><button>Apply</button></form>}</div><dl><div><dt>Item subtotal</dt><dd>{formatINR(subtotal)}</dd></div><div className="savings"><dt>Product savings</dt><dd>−{formatINR(savings)}</dd></div>{couponDiscount > 0 && <div className="savings"><dt>FLASH10</dt><dd>−{formatINR(couponDiscount)}</dd></div>}<div><dt>Delivery</dt><dd>{deliveryFee ? formatINR(deliveryFee) : "FREE"}</dd></div></dl><div className="summary-total"><span>Final amount</span><strong>{formatINR(total)}</strong></div><button className="lime-button cart-checkout" onClick={() => navigate(user ? "/checkout" : "/login?redirect=/checkout")}>{user ? "Proceed to checkout" : "Sign in to checkout"} <ArrowRight size={18} /></button>{!user && <p className="checkout-auth-note">Your cart will be waiting after sign-in.</p>}<p className="secure-note">Secure payments. 15-day easy returns.</p></aside></div> : <div className="cart-empty-runway"><aside><span><Zap fill="currentColor" /></span><p className="eyebrow">Your fast lane</p><h2>Good finds.<br /><em>In your lane.</em></h2><p>Save a standout, then bring it back here when you are ready to move.</p></aside><div><ShoppingBag size={31} /><p className="eyebrow">Cart, in motion</p><h2>Your cart is waiting for a spark.</h2><p>The next great find is one quick move away.</p><Link className="lime-button" to="/shop">Explore the edit <ArrowRight size={18} /></Link></div></div>}</section>;
+
+  return (
+    <section className="cart-page shell py-6 md:py-10 space-y-8">
+      {/* Page Title */}
+      <div className="page-title space-y-1">
+        <p className="eyebrow text-xs font-bold uppercase tracking-widest text-[#a5c900]">
+          Your fast lane
+        </p>
+        <h1 className="text-3xl md:text-5xl font-black text-[#0F1115] tracking-tight">
+          Cart, in motion.
+        </h1>
+        <p className="text-sm md:text-base text-gray-600">
+          Keep the good finds close. We’ll hold the pace from here.
+        </p>
+      </div>
+
+      {activeLines.length ? (
+        <div className="cart-layout grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+          {/* Main Cart Items Column */}
+          <div className="cart-main lg:col-span-7 space-y-6">
+            {/* Free Shipping Progress Band */}
+            <div className="shipping-progress bg-[#F4F4F1] border border-gray-200 rounded-2xl p-4 space-y-3 shadow-sm">
+              <div className="flex items-center gap-3">
+                <span className="w-9 h-9 rounded-xl bg-[#0F1115] text-[#CCFF00] flex items-center justify-center flex-shrink-0">
+                  <Truck size={18} />
+                </span>
+                <span className="text-xs md:text-sm">
+                  <b className="block font-extrabold text-[#0F1115]">
+                    {deliveryGap
+                      ? `Add ${formatINR(deliveryGap)} more for FREE Lightning Delivery.`
+                      : "Lightning Delivery unlocked!"}
+                  </b>
+                  <small className="text-gray-500 font-medium">
+                    {deliveryGap
+                      ? "You’re almost at the free-delivery line."
+                      : "Your order has caught the fast lane."}
+                  </small>
+                </span>
+              </div>
+              <div className="w-full h-2 bg-gray-200 rounded-full overflow-hidden">
+                <div
+                  className="h-full bg-[#CCFF00] rounded-full transition-all duration-500 ease-out"
+                  style={{ width: `${Math.min(100, (subtotal / 499) * 100)}%` }}
+                />
+              </div>
+            </div>
+
+            {/* Cart Lines List with AnimatePresence */}
+            <div className="cart-lines space-y-4">
+              <AnimatePresence mode="popLayout">
+                {activeLines.map((line) => (
+                  <CartItem
+                    key={`${line.productId}-${line.variantSku ?? line.color}-${line.size}`}
+                    line={line}
+                    onUpdateQuantity={updateQuantity}
+                    onRemove={removeFromCart}
+                    onMoveToWishlist={moveToWishlist}
+                  />
+                ))}
+              </AnimatePresence>
+            </div>
+
+            <Link
+              className="cart-continue inline-flex items-center gap-2 text-sm font-bold text-[#0F1115] hover:text-[#CCFF00] transition-colors pt-2"
+              to="/shop"
+            >
+              <ArrowRight size={17} /> Keep finding
+            </Link>
+          </div>
+
+          {/* Redesigned Order Summary Sidebar Column */}
+          <div className="lg:col-span-5 sticky top-24">
+            <OrderSummary
+              subtotal={subtotal}
+              savings={savings}
+              couponDiscount={couponDiscount}
+              deliveryFee={deliveryFee}
+              total={total}
+              couponCode={couponCode}
+              onApplyCoupon={applyCoupon}
+              onClearCoupon={clearCoupon}
+            />
+          </div>
+        </div>
+      ) : (
+        /* Empty Cart State */
+        <div className="cart-empty-runway py-16 flex flex-col items-center justify-center text-center space-y-6 max-w-md mx-auto">
+          <div className="w-20 h-20 rounded-3xl bg-[#0F1115] text-[#CCFF00] flex items-center justify-center shadow-xl">
+            <ShoppingBag size={36} />
+          </div>
+          <div className="space-y-2">
+            <p className="eyebrow text-xs font-bold uppercase tracking-widest text-[#a5c900]">
+              Cart, in motion
+            </p>
+            <h2 className="text-2xl md:text-3xl font-black text-[#0F1115]">
+              Your cart is waiting for a spark.
+            </h2>
+            <p className="text-sm text-gray-600">
+              The next great find is one quick move away. Save a standout, then bring it back here when you're ready to move.
+            </p>
+          </div>
+          <Link
+            className="lime-button inline-flex items-center gap-2 bg-[#CCFF00] text-[#0F1115] font-extrabold px-6 py-3.5 rounded-full hover:bg-[#D4F800] transition-all shadow-md"
+            to="/shop"
+          >
+            Explore the edit <ArrowRight size={18} />
+          </Link>
+        </div>
+      )}
+    </section>
+  );
 }

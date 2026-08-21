@@ -40,8 +40,13 @@ export default function StorefrontLayout({ children }: { children: ReactNode }) 
 
   useEffect(() => {
     const handleOpenSupport = () => setSupportOpen(true);
+    const handleOpenAuth = () => setAuthOpen(true);
     window.addEventListener("flash-open-support", handleOpenSupport);
-    return () => window.removeEventListener("flash-open-support", handleOpenSupport);
+    window.addEventListener("flash-open-auth", handleOpenAuth);
+    return () => {
+      window.removeEventListener("flash-open-support", handleOpenSupport);
+      window.removeEventListener("flash-open-auth", handleOpenAuth);
+    };
   }, []);
 
   const submitSearch = (event: React.FormEvent) => {
