@@ -12,6 +12,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import AuthPanel from "@/components/AuthPanel";
 import FlashAssistant from "@/components/FlashAssistant";
 import SupportDrawer from "@/components/SupportDrawer";
+import QuickCartDrawer from "@/components/cart/QuickCartDrawer";
 import SafeImage from "@/components/common/SafeImage";
 
 function FlashLogo({ compact = false }: { compact?: boolean }) {
@@ -218,57 +219,7 @@ export default function StorefrontLayout({ children }: { children: ReactNode }) 
 
       <main>{children}</main>
 
-      {cartOpen && (
-        <div className="cart-drawer-backdrop" onMouseDown={() => setCartOpen(false)}>
-          <aside className="cart-drawer" aria-label="Quick cart" onMouseDown={(event) => event.stopPropagation()}>
-            <div className="cart-drawer__head">
-              <div>
-                <p className="eyebrow">Quick cart</p>
-                <h2>Keep it moving.</h2>
-              </div>
-              <button onClick={() => setCartOpen(false)} aria-label="Close cart">
-                <X size={20} />
-              </button>
-            </div>
-            <div className="cart-drawer__lines">
-              {cart.filter((line) => !line.saved).length ? (
-                cart.filter((line) => !line.saved).map((line) => {
-                  const product = getProduct(line.productId);
-                  return (
-                    product && (
-                      <article key={`${line.productId}-${line.variantSku ?? line.color}-${line.size}`}>
-                        <SafeImage src={line.image ?? product.image} alt={product.name} />
-                        <div>
-                          <b>{product.name}</b>
-                          <span>{line.colorName ?? line.color ?? "Standard"} · Qty {line.quantity}</span>
-                          <small>{formatINR(product.price * line.quantity)}</small>
-                        </div>
-                        <button
-                          aria-label={`Remove ${product.name}`}
-                          onClick={() => removeFromCart({ productId: line.productId, color: line.color, size: line.size, variantSku: line.variantSku })}
-                        >
-                          <Trash2 size={15} />
-                        </button>
-                      </article>
-                    )
-                  );
-                })
-              ) : (
-                <p className="cart-drawer__empty">Your cart is waiting for the next find.</p>
-              )}
-            </div>
-            <div className="cart-drawer__footer">
-              <p>
-                <span>Subtotal</span>
-                <b>{formatINR(subtotal)}</b>
-              </p>
-              <Link className="lime-button" to="/cart" onClick={() => setCartOpen(false)}>
-                View cart <ArrowRight size={17} />
-              </Link>
-            </div>
-          </aside>
-        </div>
-      )}
+      <QuickCartDrawer isOpen={cartOpen} onClose={() => setCartOpen(false)} />
 
       {authOpen && (
         <div className="auth-modal-shell" onMouseDown={() => setAuthOpen(false)}>
