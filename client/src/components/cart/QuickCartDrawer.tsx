@@ -121,19 +121,26 @@ export default function QuickCartDrawer({
               )}
             </div>
 
-            {/* Footer with High-Visibility "View Cart" CTA */}
-            <div className="border-t border-neutral-200 bg-white p-6 sticky bottom-0">
+            {/* Quick Cart Bottom Action Footer */}
+            <div className="p-5 border-t border-neutral-100 bg-white">
               <div className="flex items-center justify-between mb-4">
-                <span className="text-sm text-neutral-500">Subtotal</span>
-                <span className="text-xl font-bold text-[#0F1115]">{formatINR(subtotal)}</span>
+                <span className="text-xs uppercase tracking-wider font-bold text-neutral-400">Subtotal</span>
+                <span className="text-lg font-black text-[#0F1115]">
+                  ₹{subtotal.toLocaleString('en-IN')}
+                </span>
               </div>
+
               <button
                 type="button"
-                onClick={handleViewCart}
-                className="w-full py-4 px-6 rounded-2xl bg-[#CCFF00] hover:bg-[#BCE600] text-[#0F1115] font-bold text-sm flex items-center justify-center gap-2 active:scale-[0.98] transition-all duration-150 shadow-none border-none"
+                onClick={() => {
+                  onClose();
+                  navigate('/cart');
+                }}
+                style={{ backgroundColor: '#CCFF00', color: '#0F1115' }}
+                className="w-full h-14 rounded-2xl bg-[#CCFF00] hover:bg-[#BCE600] text-[#0F1115] font-black text-sm uppercase tracking-wider flex items-center justify-center gap-2 active:scale-[0.98] transition-all duration-150 shadow-none border-none cursor-pointer"
               >
-                <span>View cart</span>
-                <span className="text-base font-bold">&rarr;</span>
+                <span className="text-[#0F1115] font-black">View cart</span>
+                <span className="text-[#0F1115] text-base font-bold">&rarr;</span>
               </button>
             </div>
           </motion.aside>
