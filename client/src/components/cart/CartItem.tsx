@@ -50,7 +50,7 @@ export default function CartItem({
     setTimeout(() => onRemove(lineRef), 180);
   };
 
-  const isAtMinQuantity = quantity === 1;
+  const [showTooltip, setShowTooltip] = useState(false);
 
   return (
     <motion.article
@@ -105,44 +105,55 @@ export default function CartItem({
         </div>
       </div>
 
-      {/* Quantity Stepper with Auto-Remove logic */}
-      <div className="quantity-stepper flex items-center gap-2 bg-[#F4F4F1] border border-gray-200 rounded-full p-1 self-end sm:self-center">
-        <button
-          type="button"
-          onClick={handleDecrement}
-          title={isAtMinQuantity ? "Click to remove item from cart" : "Decrease quantity"}
-          className={`w-8 h-8 rounded-full flex items-center justify-center transition-all duration-150 relative group ${
-            isAtMinQuantity
-              ? "bg-red-50 text-red-600 hover:bg-red-600 hover:text-white border border-red-200"
-              : "bg-white text-[#0F1115] hover:bg-gray-200"
-          }`}
-        >
-          {isAtMinQuantity ? (
-            <Trash2 size={14} className="transition-transform group-hover:scale-110" />
-          ) : (
-            <Minus size={14} />
-          )}
+      {/* Stepper & Action Controls Container */}
+      <div className="relative flex items-center gap-3 self-end sm:self-center">
+        {/* Quantity Pill Box */}
+        <div className="inline-flex items-center bg-[#F4F4F5] border border-neutral-200/80 rounded-full p-1 shadow-sm">
+          {/* Decrement / Trash Button */}
+          <div className="relative flex items-center justify-center">
+            <button
+              type="button"
+              onClick={handleDecrement}
+              onMouseEnter={() => setShowTooltip(true)}
+              onMouseLeave={() => setShowTooltip(false)}
+              className="w-8 h-8 rounded-full flex items-center justify-center text-neutral-600 hover:text-[#0F1115] hover:bg-white transition-all duration-150 active:scale-90"
+              aria-label={quantity === 1 ? "Remove item" : "Decrease quantity"}
+            >
+              {quantity === 1 ? (
+                <Trash2 className="w-4 h-4 text-neutral-500 hover:text-red-500 transition-colors" />
+              ) : (
+                <Minus className="w-3.5 h-3.5" />
+              )}
+            </button>
 
-          {/* Subtle tooltip feedback when quantity equals 1 */}
-          {isAtMinQuantity && (
-            <span className="absolute -top-7 left-1/2 -translate-x-1/2 bg-red-600 text-white text-[9px] font-bold px-1.5 py-0.5 rounded opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap shadow-sm">
-              Remove
-            </span>
-          )}
-        </button>
+            {/* Clean Modern Tooltip (Only appears when qty is 1 and hovered) */}
+            {quantity === 1 && showTooltip && (
+              <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 pointer-events-none z-30 flex flex-col items-center animate-in fade-in zoom-in-95 duration-150">
+                <div className="bg-[#0F1115] text-white text-[11px] font-semibold py-1 px-2.5 rounded-lg shadow-xl whitespace-nowrap border border-white/10 flex items-center gap-1.5">
+                  <span className="w-1.5 h-1.5 rounded-full bg-[#CCFF00]" />
+                  <span>Remove item</span>
+                </div>
+                {/* Tooltip Arrow Caret */}
+                <div className="w-2 h-2 bg-[#0F1115] rotate-45 -mt-1 border-r border-b border-white/10" />
+              </div>
+            )}
+          </div>
 
-        <span className="w-7 text-center font-extrabold text-sm text-[#0F1115]">
-          {quantity}
-        </span>
+          {/* Quantity Value */}
+          <span className="w-8 text-center text-sm font-bold text-[#0F1115] select-none">
+            {quantity}
+          </span>
 
-        <button
-          type="button"
-          onClick={() => onUpdateQuantity(lineRef, quantity + 1)}
-          title="Increase quantity"
-          className="w-8 h-8 rounded-full bg-white text-[#0F1115] hover:bg-gray-200 flex items-center justify-center transition-colors"
-        >
-          <Plus size={14} />
-        </button>
+          {/* Increment Button */}
+          <button
+            type="button"
+            onClick={() => onUpdateQuantity(lineRef, quantity + 1)}
+            className="w-8 h-8 rounded-full flex items-center justify-center text-neutral-600 hover:text-[#0F1115] hover:bg-white transition-all duration-150 active:scale-90"
+            aria-label="Increase quantity"
+          >
+            <Plus className="w-3.5 h-3.5" />
+          </button>
+        </div>
       </div>
     </motion.article>
   );
