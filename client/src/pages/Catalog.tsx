@@ -7,6 +7,7 @@ import { ChevronDown, Grid2X2, List, Search, SlidersHorizontal, Sparkles, X } fr
 import { Link, useParams, useSearchParams } from "react-router-dom";
 import ProductCard from "@/components/ProductCard";
 import CategoryHero from "@/components/CategoryHero";
+import Pagination from "@/components/Pagination";
 import SafeImage from "@/components/common/SafeImage";
 import { categoryOrder, formatINR, getDiscount, products, type Product, type ProductCategory } from "@/data/mockProducts";
 import { useCommerce } from "@/contexts/CommerceContext";
@@ -149,6 +150,35 @@ export default function Catalog() {
       ? "Top deals"
       : categoryFromLocation ?? "The Flash edit";
   const runwayProduct = results[0];
+
+  const ITEMS_PER_PAGE = 8;
+  const [currentPage, setCurrentPage] = useState(1);
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [
+    selectedCategory,
+    selectedBrands,
+    priceFloor,
+    priceCeiling,
+    minDiscount,
+    inStockOnly,
+    expressOnly,
+    query,
+    sort,
+    collection,
+  ]);
+
+  const totalPages = Math.ceil(results.length / ITEMS_PER_PAGE);
+  const paginatedProducts = useMemo(
+    () => results.slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE),
+    [results, currentPage]
+  );
+
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
+    window.scrollTo({ top: 380, behavior: "smooth" });
+  };
 
   return (
     <section className="catalog-page shell">
@@ -343,12 +373,60 @@ export default function Catalog() {
                       checked={selectedBrands.includes(brand)}
                       onChange={() => toggleBrand(brand)}
                     />
-                    <span />
-                    {brand}
+                    <span>{brand}</span>
                   </label>
                 ))}
               </div>
             </details>
+
+            <div className="filter-group">
+              <label>Price Range</label>
+              <div className="price-inputs">
+                <span>{formatINR(priceFloor)}</span>
+                <span>to</span>
+                <span>{formatINR(priceCeiling)}</span>
+              </div>
+              <input
+                type="range"
+                min={499}
+                max={100000}
+                step={500}
+                value={priceCeiling}
+                onChange={(e) => setPriceCeiling(Number(e.target.value))}
+              />
+            </div>
+
+            <div className="filter-group">
+              <label>Minimum Discount</label>
+              <select value={minDiscount} onChange={(e) => setMinDiscount(Number(e.target.value))}>
+                <option value={0}>All Discounts</option>
+                <option value={10}>10% or more</option>
+                <option value={20}>20% or more</option>
+                <option value={30}>30% or more</option>
+                <option value={40}>40% or more</option>
+                <option value={50}>50% or more</option>
+              </select>
+            </div>
+
+            <div className="filter-group">
+              <label>Availability & Delivery</label>
+              <label className="toggle-label">
+                <input
+                  type="checkbox"
+                  checked={inStockOnly}
+                  onChange={(e) => setInStockOnly(e.target.checked)}
+                />
+                <span>In-Stock Only</span>
+              </label>
+              <label className="toggle-label">
+                <input
+                  type="checkbox"
+                  checked={expressOnly}
+                  onChange={(e) => setExpressOnly(e.target.checked)}
+                />
+                <span>Flash Express Shipping</span>
+              </label>
+            </div>
 
             <div className="filter-rail__footer-mobile">
               <button className="lime-button" onClick={() => setShowFilters(false)}>
@@ -361,7 +439,7 @@ export default function Catalog() {
         <div className="catalog-results">
           <div className="catalog-controls">
             <p>
-              Showing <b>{results.length}</b> product{results.length === 1 ? "" : "s"}
+              Showing <b>{results.length ? Math.min((currentPage - 1) * ITEMS_PER_PAGE + 1, results.length) : 0}</b>–<b>{Math.min(currentPage * ITEMS_PER_PAGE, results.length)}</b> of <b>{results.length}</b> products
               {catalogLabel !== "The Flash edit" && <> in <b>{catalogLabel}</b></>}
             </p>
             <div className="catalog-controls__actions">
@@ -414,7 +492,7 @@ export default function Catalog() {
                 !showFilters && view === "grid" ? "catalog-grid--4col" : ""
               }`}
             >
-              {results.map((product) => (
+              {paginatedProducts.map((product) => (
                 <ProductCard key={product.id} product={product} onQuickView={setQuickView} />
               ))}
             </div>
@@ -429,15 +507,11 @@ export default function Catalog() {
             </div>
           )}
 
-          <nav className="pagination" aria-label="Catalog pages">
-            <button disabled>Previous</button>
-            <button className="is-active">1</button>
-            <button>2</button>
-            <button>3</button>
-            <span>…</span>
-            <button>5</button>
-            <button>Next</button>
-          </nav>
+          <Pagination
+            currentPage={currentPage}
+            totalPages={totalPages}
+            onPageChange={handlePageChange}
+          />
         </div>
       </div>
 
