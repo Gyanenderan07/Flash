@@ -9,15 +9,25 @@ import { ArrowRight, BadgeCheck, Briefcase, ChevronRight, Cpu, Dumbbell, Footpri
 import { Link } from "react-router-dom";
 import ProductCard from "@/components/ProductCard";
 import SafeImage from "@/components/common/SafeImage";
-import { categoryOrder, formatINR, getDiscount, products } from "@/data/mockProducts";
+import { categoryOrder, formatINR, getDiscount, products, type Product } from "@/data/mockProducts";
+import { getLiveStoreProducts } from "@/services/productService";
 
 const categoryArt = ["camera", "hoodie", "shoe", "watch", "chair", "scent", "ball", "bag"];
 const categorySlug = (category: string) => category.toLowerCase().replace(/\s+/g, "-");
 
 export default function Home() {
-  const heroProducts = products.slice(0, 4);
+  const [allProducts, setAllProducts] = useState<Product[]>(products);
+  const heroProducts = allProducts.slice(0, 4);
   const [currentSlide, setCurrentSlide] = useState(0);
   const [isHovered, setIsHovered] = useState(false);
+
+  useEffect(() => {
+    async function loadLiveProducts() {
+      const liveList = await getLiveStoreProducts();
+      setAllProducts(liveList);
+    }
+    loadLiveProducts();
+  }, []);
 
   // Requirement 3: Live Running "Offers Refresh In:" Countdown Timer
   const [timeLeft, setTimeLeft] = useState({ hours: 8, minutes: 46, seconds: 32 });
@@ -245,7 +255,7 @@ export default function Home() {
           </Link>
         </div>
         <div className="product-grid home-product-grid">
-          {products.slice(0, 5).map((product) => (
+          {allProducts.slice(0, 5).map((product) => (
             <ProductCard key={product.id} product={product} />
           ))}
         </div>
