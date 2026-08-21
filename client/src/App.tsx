@@ -23,6 +23,7 @@ import FlashClub from "./pages/FlashClub";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
 import SellerPortal from "./pages/SellerPortal";
+import SellerDashboard from "./pages/SellerDashboard";
 import { AuthProvider } from "./contexts/AuthContext";
 
 function RoutePlaceholder({ title }: { title: string }) { return <section className="shell route-placeholder"><p className="eyebrow">Flash Commerce</p><h1>{title}</h1><p>The next layer of this storefront is being connected now.</p></section>; }
@@ -52,7 +53,8 @@ function App() {
           <Route path="/account" element={<Account />} />
           <Route path="/orders" element={<Orders />} />
           <Route path="/flash-club" element={<FlashClub />} />
-          <Route path="/seller" element={<SellerPortal />} />
+          <Route path="/seller" element={<SellerDashboard />} />
+          <Route path="/seller-dashboard" element={<SellerDashboard />} />
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
           <Route path="*" element={<NotFound />} />
