@@ -12,6 +12,8 @@ import SafeImage from "@/components/common/SafeImage";
 import { categoryOrder, formatINR, getDiscount, products, type Product, type ProductCategory } from "@/data/mockProducts";
 import { useCommerce } from "@/contexts/CommerceContext";
 
+import { supabase } from "@/lib/supabase";
+
 const brands = Array.from(new Set(products.map((product) => product.brand)));
 
 function slugToCategory(slug?: string) {
@@ -45,10 +47,56 @@ export default function Catalog() {
   const [expressOnly, setExpressOnly] = useState(false);
   const [view, setView] = useState<"grid" | "list">("grid");
   const [quickView, setQuickView] = useState<Product | null>(null);
+  const [allProducts, setAllProducts] = useState<Product[]>(products);
 
   useEffect(() => {
     setSelectedCategory(categoryFromLocation ?? "All");
   }, [categoryFromLocation]);
+
+  useEffect(() => {
+    async function loadLiveProducts() {
+      try {
+        const { data, error } = await supabase.from("products").select("*").order("created_at", { ascending: false });
+        if (!error && data && data.length > 0) {
+          const mapped: Product[] = data.map((item: any, idx: number) => {
+            const rawCat = item.category || "home-living";
+            const categoryFormatted = categoryOrder.find(
+              (c) => c.toLowerCase().replace(/[^a-z0-9]/g, "") === rawCat.toLowerCase().replace(/[^a-z0-9]/g, "")
+            ) ?? "Home & Living";
+
+            return {
+              id: item.id ? String(item.id) : `sb-${idx}-${Date.now()}`,
+              name: item.name || item.title || "Untitled Product",
+              category: categoryFormatted as ProductCategory,
+              subcategory: item.subcategory || "General",
+              brand: item.brand || "Flash",
+              price: Number(item.price || 0),
+              mrp: Number(item.original_price || item.mrp || Math.round(Number(item.price || 0) * 1.4)),
+              stock: Number(item.stock || 10),
+              express: true,
+              isNew: true,
+              image: item.primary_image || item.image || "https://images.unsplash.com/photo-1507473885765-e6ed057f782c?auto=format&fit=crop&w=800&q=80",
+              gallery: Array.isArray(item.hover_images) && item.hover_images.length
+                ? item.hover_images
+                : [item.primary_image || item.image || "https://images.unsplash.com/photo-1507473885765-e6ed057f782c?auto=format&fit=crop&w=800&q=80"],
+              description: item.description || "Flash verified product.",
+              highlights: ["Authentic quality guarantee", "Fast dispatch eligible"],
+              colors: ["#0F1115", "#CCFF00"],
+              sku: item.sku || `FL-SB-${Math.floor(100 + Math.random() * 900)}`,
+            };
+          });
+
+          setAllProducts((current) => {
+            const dbIds = new Set(mapped.map((m) => m.id));
+            return [...mapped, ...products.filter((p) => !dbIds.has(p.id))];
+          });
+        }
+      } catch (err) {
+        console.warn("Supabase live product fetch notice:", err);
+      }
+    }
+    loadLiveProducts();
+  }, []);
 
   const query = (searchParams.get("search") ?? searchQuery).trim().toLowerCase();
   const sort = searchParams.get("sort") ?? "featured";
@@ -63,7 +111,7 @@ export default function Catalog() {
 
   const results = useMemo(
     () =>
-      products
+      allProducts
         .filter((product) => {
           const matchesQuery =
             !query ||
@@ -100,6 +148,7 @@ export default function Catalog() {
             : 0
         ),
     [
+      allProducts,
       query,
       selectedCategory,
       selectedBrands,

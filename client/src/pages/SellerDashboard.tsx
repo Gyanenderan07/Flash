@@ -67,6 +67,17 @@ export default function SellerDashboard() {
     fetchLiveCatalog();
   }, []);
 
+  const handleImageFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setFormData((prev) => ({ ...prev, image: reader.result as string }));
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
   const handleAddProductSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
@@ -426,14 +437,33 @@ export default function SellerDashboard() {
               </div>
 
               <div>
-                <label className="block font-bold text-[#0F1115] mb-1">Primary Image URL</label>
-                <input
-                  type="url"
-                  value={formData.image}
-                  onChange={(e) => setFormData({ ...formData, image: e.target.value })}
-                  placeholder="https://images.unsplash.com/photo-..."
-                  className="w-full px-3.5 py-2.5 bg-neutral-50 border border-neutral-200 rounded-xl text-xs text-[#0F1115] focus:outline-none"
-                />
+                <label className="block font-bold text-[#0F1115] mb-1">Product Image</label>
+                <div className="space-y-2">
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={handleImageFileUpload}
+                    className="w-full text-xs text-neutral-500 file:mr-3 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-bold file:bg-[#0F1115] file:text-white hover:file:bg-neutral-800 cursor-pointer"
+                  />
+                  <div className="text-[10px] font-semibold text-neutral-400">or enter image URL below:</div>
+                  <input
+                    type="url"
+                    value={formData.image}
+                    onChange={(e) => setFormData({ ...formData, image: e.target.value })}
+                    placeholder="https://images.unsplash.com/photo-..."
+                    className="w-full px-3.5 py-2.5 bg-neutral-50 border border-neutral-200 rounded-xl text-xs text-[#0F1115] focus:outline-none"
+                  />
+                </div>
+                {formData.image && (
+                  <div className="mt-2.5 flex items-center gap-3">
+                    <div className="relative w-16 h-16 rounded-xl overflow-hidden border border-neutral-200 shadow-sm flex-shrink-0">
+                      <img src={formData.image} alt="Preview" className="w-full h-full object-cover" />
+                    </div>
+                    <span className="text-[11px] font-bold text-emerald-600 bg-emerald-50 border border-emerald-200 px-2.5 py-1 rounded-full">
+                      ✓ Image preview loaded
+                    </span>
+                  </div>
+                )}
               </div>
 
               <div>
