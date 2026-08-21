@@ -149,11 +149,15 @@ export default function OrderSummary({
       {/* Full-width Rounded-full Action CTA */}
       <div className="space-y-2 pt-1">
         <button
+          type="button"
           onClick={handleCheckoutClick}
-          className="w-full bg-[#CCFF00] hover:bg-[#D4F800] text-[#0F1115] font-bold text-base py-3.5 px-6 rounded-full shadow-lg shadow-[#CCFF00]/10 hover:shadow-[#CCFF00]/25 active:scale-[0.99] transition-all flex items-center justify-center gap-2 group cursor-pointer"
+          style={{ backgroundColor: '#CCFF00', color: '#0F1115' }}
+          className="w-full py-4 px-6 rounded-2xl bg-[#CCFF00] hover:bg-[#D4F800] text-[#0F1115] font-black text-sm uppercase tracking-wider flex items-center justify-center gap-2 shadow-[0_0_25px_rgba(204,255,0,0.35)] hover:shadow-[0_0_35px_rgba(204,255,0,0.55)] active:scale-[0.98] transition-all duration-200 cursor-pointer border-none group"
         >
-          <span>{user ? "Proceed to Checkout" : "Sign in to checkout"}</span>
-          <ArrowRight size={18} className="group-hover:translate-x-1 transition-transform" />
+          <span className="text-[#0F1115] font-black tracking-wider">
+            {user ? "Proceed to Checkout" : "Sign in to checkout"}
+          </span>
+          <span className="text-[#0F1115] text-base font-bold transition-transform group-hover:translate-x-1 duration-200">&rarr;</span>
         </button>
 
         {!user && (
