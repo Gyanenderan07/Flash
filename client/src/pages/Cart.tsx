@@ -1,16 +1,18 @@
 /**
- * Flash Cart Page — Editorial checkout runway featuring modular CartItem components,
- * quantity stepper auto-remove logic, Framer Motion exit transitions, and glassmorphic OrderSummary.
+ * Flash Cart Page — Restored 2-Column Desktop Grid Architecture (`lg:grid-cols-12`),
+ * side-by-side layout with left column (span 7 or 8) for items & Lightning Delivery banner,
+ * and sticky right column (span 5 or 4) for the glassmorphic Order Summary card.
  */
 import { AnimatePresence } from "framer-motion";
-import { ArrowRight, ShoppingBag, Truck, Zap } from "lucide-react";
-import { Link } from "react-router-dom";
+import { ArrowLeft, ShoppingBag } from "lucide-react";
+import { Link, useNavigate } from "react-router-dom";
 import { useCommerce } from "@/contexts/CommerceContext";
 import { formatINR, getProduct } from "@/data/mockProducts";
 import CartItem, { type CartLineItem } from "@/components/cart/CartItem";
 import OrderSummary from "@/components/cart/OrderSummary";
 
 export default function Cart() {
+  const navigate = useNavigate();
   const {
     cart,
     subtotal,
@@ -29,9 +31,7 @@ export default function Cart() {
   const activeLines: CartLineItem[] = cart
     .filter((line) => !line.saved)
     .map((line) => ({ ...line, product: getProduct(line.productId) }))
-    .filter(
-      (line): line is CartLineItem => Boolean(line.product)
-    );
+    .filter((line): line is CartLineItem => Boolean(line.product));
 
   const deliveryGap = Math.max(0, 499 - subtotal);
 
@@ -51,71 +51,77 @@ export default function Cart() {
       </div>
 
       {activeLines.length ? (
-        <div className="cart-layout grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
-          {/* Main Cart Items Column */}
-          <div className="cart-main lg:col-span-7 space-y-6">
-            {/* Free Shipping Progress Band */}
-            <div className="shipping-progress bg-[#F4F4F1] border border-gray-200 rounded-2xl p-4 space-y-3 shadow-sm">
-              <div className="flex items-center gap-3">
-                <span className="w-9 h-9 rounded-xl bg-[#0F1115] text-[#CCFF00] flex items-center justify-center flex-shrink-0">
-                  <Truck size={18} />
-                </span>
-                <span className="text-xs md:text-sm">
-                  <b className="block font-extrabold text-[#0F1115]">
-                    {deliveryGap
-                      ? `Add ${formatINR(deliveryGap)} more for FREE Lightning Delivery.`
-                      : "Lightning Delivery unlocked!"}
-                  </b>
-                  <small className="text-gray-500 font-medium">
-                    {deliveryGap
-                      ? "You’re almost at the free-delivery line."
-                      : "Your order has caught the fast lane."}
-                  </small>
-                </span>
-              </div>
-              <div className="w-full h-2 bg-gray-200 rounded-full overflow-hidden">
-                <div
-                  className="h-full bg-[#CCFF00] rounded-full transition-all duration-500 ease-out"
-                  style={{ width: `${Math.min(100, (subtotal / 499) * 100)}%` }}
-                />
-              </div>
-            </div>
-
-            {/* Cart Lines List with AnimatePresence */}
-            <div className="cart-lines space-y-4">
-              <AnimatePresence mode="popLayout">
-                {activeLines.map((line) => (
-                  <CartItem
-                    key={`${line.productId}-${line.variantSku ?? line.color}-${line.size}`}
-                    line={line}
-                    onUpdateQuantity={updateQuantity}
-                    onRemove={removeFromCart}
-                    onMoveToWishlist={moveToWishlist}
+        <div className="max-w-7xl mx-auto py-2">
+          {/* Cart Content: 2-Column Side-by-Side Layout */}
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+            {/* Left Column (Span 7 or 8) */}
+            <div className="lg:col-span-7 xl:col-span-8 space-y-6">
+              {/* 1. Lightning Delivery Banner */}
+              <div className="p-4 sm:p-5 rounded-2xl bg-[#F8FAFC] border border-[#E2E8F0] relative overflow-hidden shadow-sm">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-[#0F1115] text-[#CCFF00] flex items-center justify-center flex-shrink-0 shadow-sm">
+                    <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
+                    </svg>
+                  </div>
+                  <div>
+                    <h4 className="text-sm font-bold text-[#0F1115]">
+                      {deliveryGap ? `Add ${formatINR(deliveryGap)} more for FREE Lightning Delivery` : "Lightning Delivery unlocked!"}
+                    </h4>
+                    <p className="text-xs text-neutral-500">
+                      {deliveryGap ? "You’re almost at the free-delivery line." : "Your order has caught the fast lane."}
+                    </p>
+                  </div>
+                </div>
+                {/* Neon Progress Bar */}
+                <div className="mt-3 h-1.5 w-full bg-neutral-200 rounded-full overflow-hidden">
+                  <div
+                    className="h-full bg-[#CCFF00] rounded-full transition-all duration-500"
+                    style={{ width: `${Math.min(100, (subtotal / 499) * 100)}%` }}
                   />
-                ))}
-              </AnimatePresence>
+                </div>
+              </div>
+
+              {/* 2. Cart Items List */}
+              <div className="space-y-4">
+                <AnimatePresence mode="popLayout">
+                  {activeLines.map((line) => (
+                    <CartItem
+                      key={`${line.productId}-${line.variantSku ?? line.color}-${line.size}`}
+                      line={line}
+                      onUpdateQuantity={updateQuantity}
+                      onRemove={removeFromCart}
+                      onMoveToWishlist={moveToWishlist}
+                    />
+                  ))}
+                </AnimatePresence>
+              </div>
+
+              {/* 3. Keep Finding / Continue Shopping Link */}
+              <div className="pt-2">
+                <button
+                  type="button"
+                  onClick={() => navigate("/shop")}
+                  className="inline-flex items-center gap-2 text-sm font-semibold text-[#0F1115] hover:text-neutral-600 transition-colors"
+                >
+                  <ArrowLeft size={16} /> Keep finding
+                </button>
+              </div>
             </div>
 
-            <Link
-              className="cart-continue inline-flex items-center gap-2 text-sm font-bold text-[#0F1115] hover:text-[#CCFF00] transition-colors pt-2"
-              to="/shop"
-            >
-              <ArrowRight size={17} /> Keep finding
-            </Link>
-          </div>
-
-          {/* Redesigned Order Summary Sidebar Column */}
-          <div className="lg:col-span-5 sticky top-24">
-            <OrderSummary
-              subtotal={subtotal}
-              savings={savings}
-              couponDiscount={couponDiscount}
-              deliveryFee={deliveryFee}
-              total={total}
-              couponCode={couponCode}
-              onApplyCoupon={applyCoupon}
-              onClearCoupon={clearCoupon}
-            />
+            {/* Right Column (Span 5 or 4): Sticky Order Summary */}
+            <div className="lg:col-span-5 xl:col-span-4 lg:sticky lg:top-24">
+              <OrderSummary
+                subtotal={subtotal}
+                savings={savings}
+                couponDiscount={couponDiscount}
+                deliveryFee={deliveryFee}
+                total={total}
+                couponCode={couponCode}
+                onApplyCoupon={applyCoupon}
+                onClearCoupon={clearCoupon}
+              />
+            </div>
           </div>
         </div>
       ) : (
@@ -139,7 +145,7 @@ export default function Cart() {
             className="lime-button inline-flex items-center gap-2 bg-[#CCFF00] text-[#0F1115] font-extrabold px-6 py-3.5 rounded-full hover:bg-[#D4F800] transition-all shadow-md"
             to="/shop"
           >
-            Explore the edit <ArrowRight size={18} />
+            Explore the edit
           </Link>
         </div>
       )}
