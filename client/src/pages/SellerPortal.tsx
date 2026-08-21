@@ -71,7 +71,7 @@ export default function SellerPortal() {
     return matchesSearch && matchesCat;
   });
 
-  const handleAddProduct = (e: React.FormEvent) => {
+  const handleAddProduct = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newProduct.name || !newProduct.price) {
       toast.error("Please fill in the product name and price.");
@@ -105,6 +105,12 @@ export default function SellerPortal() {
       sku: `FL-SELLER-${Math.floor(100 + Math.random() * 900)}`,
     };
 
+    try {
+      await supabase.from("products").insert([createdItem]);
+    } catch (err) {
+      console.info("Supabase product sync info:", err);
+    }
+
     setProductList((prev) => [createdItem, ...prev]);
     setIsAddModalOpen(false);
     toast.success(`"${newProduct.name}" added to merchant catalog!`);
@@ -121,7 +127,12 @@ export default function SellerPortal() {
     });
   };
 
-  const handleDeleteProduct = (id: string, name: string) => {
+  const handleDeleteProduct = async (id: string, name: string) => {
+    try {
+      await supabase.from("products").delete().eq("id", id);
+    } catch (err) {
+      console.info("Supabase product delete info:", err);
+    }
     setProductList((prev) => prev.filter((p) => p.id !== id));
     toast.info(`Removed "${name}" from inventory.`);
   };

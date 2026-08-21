@@ -6,6 +6,8 @@ import { createContext, useCallback, useContext, useEffect, useMemo, useState, t
 import { toast } from "sonner";
 import { getProduct, getProductVariant, type Product } from "@/data/mockProducts";
 
+import { supabase } from "@/lib/supabase";
+
 export type CartLine = { productId: string; quantity: number; color?: string; colorName?: string; variantSku?: string; image?: string; size?: string; saved?: boolean };
 type CartLineRef = Pick<CartLine, "productId" | "color" | "size" | "variantSku">;
 export type Address = { id: string; label: string; name: string; line1: string; city: string; state: string; pincode: string; phone: string; isDefault?: boolean };
@@ -111,13 +113,50 @@ export function CommerceProvider({ children }: { children: ReactNode }) {
     return { subtotal, savings, couponDiscount, deliveryFee, total: Math.max(0, subtotal - couponDiscount + deliveryFee), cartCount: active.reduce((sum, line) => sum + line.quantity, 0) };
   }, [cart, couponCode]);
 
-  const createOrder = useCallback((addressId: string) => {
-    if (!cart.length || !addresses.some((address) => address.id === addressId)) return null;
-    const lines = cart.filter((line) => !line.saved);
-    if (!lines.length) return null;
-    const order: Order = { id: `FL-${Math.floor(10000 + Math.random() * 89999)}`, createdAt: new Date().toISOString().slice(0, 10), status: "Processing", lines, total: summaries.total, addressId };
-    setOrders((current) => [order, ...current]); setCart([]); setCouponCode(null); return order;
-  }, [cart, addresses, summaries.total]);
+  const createOrder = useCallback(
+    (addressId: string) => {
+      if (!cart.length || !addresses.some((address) => address.id === addressId)) return null;
+      const lines = cart.filter((line) => !line.saved);
+      if (!lines.length) return null;
+      const order: Order = {
+        id: `FL-${Math.floor(10000 + Math.random() * 89999)}`,
+        createdAt: new Date().toISOString().slice(0, 10),
+        status: "Processing",
+        lines,
+        total: summaries.total,
+        addressId,
+      };
+
+      // Persist order to Supabase orders table
+      try {
+        supabase
+          .from("orders")
+          .insert([
+            {
+              id: order.id,
+              created_at: order.createdAt,
+              status: order.status,
+              total: order.total,
+              address_id: order.addressId,
+              lines: order.lines,
+            },
+          ])
+          .then(({ error }) => {
+            if (error) {
+              console.info("Supabase order notice:", error.message);
+            }
+          });
+      } catch (err) {
+        console.info("Supabase order notice:", err);
+      }
+
+      setOrders((current) => [order, ...current]);
+      setCart([]);
+      setCouponCode(null);
+      return order;
+    },
+    [cart, addresses, summaries.total]
+  );
 
   const value = useMemo<CommerceValue>(() => ({ cart, wishlistIds, searchQuery, couponCode, addresses, orders, ...summaries, addToCart, updateQuantity, removeFromCart, moveToWishlist, toggleWishlist, setSearchQuery, applyCoupon, clearCoupon, addAddress, deleteAddress, setDefaultAddress, createOrder }), [cart, wishlistIds, searchQuery, couponCode, addresses, orders, summaries, addToCart, updateQuantity, removeFromCart, toggleWishlist, moveToWishlist, applyCoupon, clearCoupon, addAddress, deleteAddress, setDefaultAddress, createOrder]);
   return <CommerceContext.Provider value={value}>{children}</CommerceContext.Provider>;
