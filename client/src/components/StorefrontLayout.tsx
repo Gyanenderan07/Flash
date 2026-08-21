@@ -63,20 +63,28 @@ export default function StorefrontLayout({ children }: { children: ReactNode }) 
   };
 
   const accountInitial = user?.name.split(/\s+/).map((part) => part[0]).join("").slice(0, 2).toUpperCase();
-  const activeCategory = new URLSearchParams(location.search).get("category") ?? "";
-  const activeCollection = new URLSearchParams(location.search).get("collection") ?? "";
+  const searchParams = new URLSearchParams(location.search);
+  const activeCategoryRaw = searchParams.get("category") ?? "";
+  const activeCollection = searchParams.get("collection") ?? "";
+
+  const matchCategorySlug = (cat: string, currentCategoryParam: string, currentPathname: string) => {
+    const rawParam = decodeURIComponent(currentCategoryParam || (currentPathname.startsWith("/category/") ? currentPathname.slice(10) : ""));
+    const normCurrent = rawParam.toLowerCase().replace(/[^a-z0-9]/g, "");
+    const normCat = cat.toLowerCase().replace(/[^a-z0-9]/g, "");
+    return Boolean(normCurrent) && normCurrent === normCat;
+  };
 
   const navItems = [
-    { id: "all-categories", label: "All Categories", to: "/shop", icon: <Menu size={16} />, checkActive: () => (location.pathname === "/shop" || location.pathname === "/") && !activeCategory && !activeCollection },
+    { id: "all-categories", label: "All Categories", to: "/shop", icon: <Menu size={16} />, checkActive: () => (location.pathname === "/shop" || location.pathname === "/") && !activeCategoryRaw && !activeCollection },
     { id: "new-in", label: "New In", to: "/shop?collection=new-in", checkActive: () => activeCollection === "new-in" },
     { id: "top-deals", label: "Top Deals", to: "/shop?collection=top-deals", checkActive: () => activeCollection === "top-deals" },
     ...categoryOrder.map((cat) => {
-      const slug = cat.toLowerCase().replace(/\s+/g, "-");
+      const slug = cat === "Home & Living" ? "home-living" : cat.toLowerCase().replace(/\s+/g, "-");
       return {
         id: `cat-${slug}`,
         label: cat,
         to: `/shop?category=${slug}`,
-        checkActive: () => activeCategory === slug || location.pathname === `/category/${slug}`,
+        checkActive: () => matchCategorySlug(cat, activeCategoryRaw, location.pathname),
       };
     }),
     { id: "flash-club", label: "Flash Club", to: "/flash-club", badge: "NEW", checkActive: () => location.pathname === "/flash-club" },

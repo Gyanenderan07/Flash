@@ -13,7 +13,15 @@ import { useCommerce } from "@/contexts/CommerceContext";
 const brands = Array.from(new Set(products.map((product) => product.brand)));
 
 function slugToCategory(slug?: string) {
-  return categoryOrder.find((category) => category.toLowerCase().replace(/\s+/g, "-") === slug) ?? null;
+  if (!slug) return null;
+  const decoded = decodeURIComponent(slug).toLowerCase();
+  const normalized = decoded.replace(/[^a-z0-9]/g, "");
+  return (
+    categoryOrder.find((category) => {
+      const catNorm = category.toLowerCase().replace(/[^a-z0-9]/g, "");
+      return catNorm === normalized;
+    }) ?? null
+  );
 }
 
 export default function Catalog() {

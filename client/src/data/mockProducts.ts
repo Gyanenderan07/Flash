@@ -144,6 +144,68 @@ const productSeed: Product[] = [
   { id: "signal-sunglasses", name: "Signal Frame Sunglasses", category: "Accessories", subcategory: "Eyewear", brand: "Urbanic", price: 1499, mrp: 2599, stock: 32, express: true, image: photo("photo-1511499767150-a48a237f0083"), gallery: [photo("photo-1511499767150-a48a237f0083"), photo("photo-1508296695146-257a814070b4")], description: "A sharp rectangular frame that brings an immediate finish to the look.", highlights: ["UV400 lenses", "Lightweight acetate", "Hard case included", "Polarized finish"], colors: ["#161616", "#C6A970"], sku: "FL-SFS-BLK" },
   { id: "loop-cable-kit", name: "Loop Cable Kit", category: "Accessories", subcategory: "Tech Organizers", brand: "Zapster", price: 899, mrp: 1599, stock: 54, express: true, image: photo("photo-1551033406-611cf9a28f67"), gallery: [photo("photo-1551033406-611cf9a28f67"), photo("photo-1505740420928-5e560c06d30e")], description: "A compact organizer that stops the small tech essentials from wandering.", highlights: ["Elastic cable loops", "Zip enclosure", "Water-resistant shell", "Pocket-friendly size"], colors: ["#202020", "#B9C88B"], sku: "FL-LCK-OBS" },
   { id: "arc-card-holder", name: "Arc Card Holder", category: "Accessories", subcategory: "Wallets", brand: "Flash", price: 699, mrp: 1299, stock: 61, express: true, image: photo("photo-1627123424574-724758594e93"), gallery: [photo("photo-1627123424574-724758594e93"), photo("photo-1622831617330-89e2d40b8e5c")], description: "A slim everyday card holder with a clean pull-tab and a low-profile build.", highlights: ["Six card slots", "Pull-tab pocket", "Vegan leather", "RFID lining"], colors: ["#1A1A1A", "#AD8E5C"], sku: "FL-ACH-BLK" },
+  {
+    id: "hl-1",
+    name: "AuraDesk Smart Lamp",
+    category: "Home & Living",
+    subcategory: "Lighting",
+    brand: "Lumicore",
+    price: 3499,
+    mrp: 5999,
+    stock: 14,
+    express: true,
+    isNew: true,
+    image: "https://images.unsplash.com/photo-1507473885765-e6ed057f782c?auto=format&fit=crop&w=800&q=80",
+    gallery: [
+      "https://images.unsplash.com/photo-1507473885765-e6ed057f782c?auto=format&fit=crop&w=800&q=80",
+      "https://images.unsplash.com/photo-1513506003901-1e6a229e2d15?auto=format&fit=crop&w=800&q=80",
+      "https://images.unsplash.com/photo-1540932239986-30128078f3c5?auto=format&fit=crop&w=800&q=80"
+    ],
+    description: "Minimalist ambient LED desk lamp with touch dimming and wireless Qi charging base.",
+    highlights: ["Minimalist ambient LED", "Touch dimming", "Wireless Qi charging base", "Eye-comfort LED array"],
+    colors: ["#0F1115", "#F4F4F5"],
+    sku: "FL-HL1-LAMP"
+  },
+  {
+    id: "hl-2",
+    name: "Nordic Ceramic Diffuser",
+    category: "Home & Living",
+    subcategory: "Wellness",
+    brand: "Botanic",
+    price: 1899,
+    mrp: 3299,
+    stock: 22,
+    express: true,
+    image: "https://images.unsplash.com/photo-1608571423902-eed4a5ad8108?auto=format&fit=crop&w=800&q=80",
+    gallery: [
+      "https://images.unsplash.com/photo-1608571423902-eed4a5ad8108?auto=format&fit=crop&w=800&q=80",
+      "https://images.unsplash.com/photo-1546554137-f86b9593a222?auto=format&fit=crop&w=800&q=80"
+    ],
+    description: "Ultrasonic aroma diffuser with matte ceramic stone finish and warm ambient glow.",
+    highlights: ["Ultrasonic misting", "Matte ceramic finish", "Warm ambient glow", "Auto shut-off sensor"],
+    colors: ["#9CA3AF", "#D1D5DB"],
+    sku: "FL-HL2-DIFF"
+  },
+  {
+    id: "hl-3",
+    name: "Minimal Ergonomic Seat Cushion",
+    category: "Home & Living",
+    subcategory: "Furniture",
+    brand: "Vantage",
+    price: 2199,
+    mrp: 3999,
+    stock: 19,
+    express: true,
+    image: "https://images.unsplash.com/photo-1586023492125-27b2c045efd7?auto=format&fit=crop&w=800&q=80",
+    gallery: [
+      "https://images.unsplash.com/photo-1586023492125-27b2c045efd7?auto=format&fit=crop&w=800&q=80",
+      "https://images.unsplash.com/photo-1583847268964-b28dc8f51f92?auto=format&fit=crop&w=800&q=80"
+    ],
+    description: "Memory foam posture cushion with breathable honeycomb mesh and obsidian cover.",
+    highlights: ["Memory foam core", "Honeycomb mesh", "Obsidian cover", "Lumbar support"],
+    colors: ["#1E2024", "#CCFF00"],
+    sku: "FL-HL3-CUSH"
+  },
 ];
 
 export const products: Product[] = productSeed.map((product, index) => ({ ...product, gallery: fourAngles(index, product.gallery) }));
