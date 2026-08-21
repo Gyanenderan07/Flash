@@ -11,6 +11,8 @@ import { formatINR, getProduct } from "@/data/mockProducts";
 import CartItem, { type CartLineItem } from "@/components/cart/CartItem";
 import OrderSummary from "@/components/cart/OrderSummary";
 
+import EmptyCartView from "@/components/cart/EmptyCartView";
+
 export default function Cart() {
   const navigate = useNavigate();
   const {
@@ -125,29 +127,7 @@ export default function Cart() {
           </div>
         </div>
       ) : (
-        /* Empty Cart State */
-        <div className="cart-empty-runway py-16 flex flex-col items-center justify-center text-center space-y-6 max-w-md mx-auto">
-          <div className="w-20 h-20 rounded-3xl bg-[#0F1115] text-[#CCFF00] flex items-center justify-center shadow-xl">
-            <ShoppingBag size={36} />
-          </div>
-          <div className="space-y-2">
-            <p className="eyebrow text-xs font-bold uppercase tracking-widest text-[#a5c900]">
-              Cart, in motion
-            </p>
-            <h2 className="text-2xl md:text-3xl font-black text-[#0F1115]">
-              Your cart is waiting for a spark.
-            </h2>
-            <p className="text-sm text-gray-600">
-              The next great find is one quick move away. Save a standout, then bring it back here when you're ready to move.
-            </p>
-          </div>
-          <Link
-            className="lime-button inline-flex items-center gap-2 bg-[#CCFF00] text-[#0F1115] font-extrabold px-6 py-3.5 rounded-full hover:bg-[#D4F800] transition-all shadow-md"
-            to="/shop"
-          >
-            Explore the edit
-          </Link>
-        </div>
+        <EmptyCartView />
       )}
     </section>
   );
