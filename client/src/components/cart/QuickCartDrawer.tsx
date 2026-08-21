@@ -129,17 +129,11 @@ export default function QuickCartDrawer({
               </div>
               <button
                 type="button"
-                className="relative w-full flex items-center justify-center gap-2 rounded-xl bg-[#D4F800] py-4 px-6 text-base font-bold text-[#0F1115] transition-colors hover:bg-[#C8E600] active:scale-[0.98] overflow-hidden group cursor-pointer"
                 onClick={handleViewCart}
+                className="w-full py-4 px-6 rounded-2xl bg-[#CCFF00] hover:bg-[#BCE600] text-[#0F1115] font-bold text-sm flex items-center justify-center gap-2 active:scale-[0.98] transition-all duration-150 shadow-none border-none"
               >
-                {/* Glossy / Liquid Water Surface Reflection */}
-                <div className="absolute inset-x-0 top-0 h-[45%] bg-gradient-to-b from-white/40 to-transparent rounded-t-xl pointer-events-none" />
-
-                {/* Liquid Shimmer Light Reflection on Hover */}
-                <div className="absolute inset-0 -translate-x-full group-hover:translate-x-full transition-transform duration-700 ease-out bg-gradient-to-r from-transparent via-white/35 to-transparent pointer-events-none" />
-
-                <span className="relative z-10 font-bold">View cart</span>
-                <span className="relative z-10 text-xl font-bold transition-transform group-hover:translate-x-1 duration-200">→</span>
+                <span>View cart</span>
+                <span className="text-base font-bold">&rarr;</span>
               </button>
             </div>
           </motion.aside>
