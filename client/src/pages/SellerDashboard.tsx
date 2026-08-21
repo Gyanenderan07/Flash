@@ -20,12 +20,15 @@ import { supabase } from "@/lib/supabase";
 import { products as fallbackProducts, formatINR, categoryOrder } from "@/data/mockProducts";
 import SafeImage from "@/components/common/SafeImage";
 
+import { uploadProductImage } from "@/lib/storage";
+
 export default function SellerDashboard() {
   const [products, setProducts] = useState<any[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState<string>("All");
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isUploadingImage, setIsUploadingImage] = useState(false);
 
   // Form state
   const [formData, setFormData] = useState({
@@ -67,14 +70,18 @@ export default function SellerDashboard() {
     fetchLiveCatalog();
   }, []);
 
-  const handleImageFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleImageFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setFormData((prev) => ({ ...prev, image: reader.result as string }));
-      };
-      reader.readAsDataURL(file);
+      setIsUploadingImage(true);
+      try {
+        const imageUrl = await uploadProductImage(file);
+        setFormData((prev) => ({ ...prev, image: imageUrl }));
+      } catch (err) {
+        console.warn("Image upload error:", err);
+      } finally {
+        setIsUploadingImage(false);
+      }
     }
   };
 
@@ -487,11 +494,11 @@ export default function SellerDashboard() {
                 </button>
                 <button
                   type="submit"
-                  disabled={isSubmitting}
+                  disabled={isSubmitting || isUploadingImage}
                   style={{ backgroundColor: "#CCFF00", color: "#0F1115" }}
                   className="px-5 py-2.5 rounded-xl bg-[#CCFF00] text-[#0F1115] font-black text-xs uppercase tracking-wider hover:bg-[#D4F800] disabled:opacity-50 flex items-center gap-2 cursor-pointer"
                 >
-                  {isSubmitting ? "Inserting..." : "Insert into Supabase"}
+                  {isSubmitting ? "Inserting..." : isUploadingImage ? "Uploading Image..." : "Insert into Supabase"}
                 </button>
               </div>
             </form>
