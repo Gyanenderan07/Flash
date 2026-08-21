@@ -6,6 +6,7 @@ import { useEffect, useMemo, useState } from "react";
 import { ChevronDown, Grid2X2, List, Search, SlidersHorizontal, Sparkles, X } from "lucide-react";
 import { Link, useParams, useSearchParams } from "react-router-dom";
 import ProductCard from "@/components/ProductCard";
+import CategoryHero from "@/components/CategoryHero";
 import SafeImage from "@/components/common/SafeImage";
 import { categoryOrder, formatINR, getDiscount, products, type Product, type ProductCategory } from "@/data/mockProducts";
 import { useCommerce } from "@/contexts/CommerceContext";
@@ -186,44 +187,12 @@ export default function Catalog() {
       </div>
 
       {runwayProduct && (
-        <section
-          className={`catalog-runway ${collection === "top-deals" ? "catalog-runway--deals" : ""}`}
-          aria-label={`${catalogLabel} editorial highlight`}
-        >
-          <div>
-            <p>{collection === "top-deals" ? "Flash deal capsule" : `${catalogLabel} in motion`}</p>
-            <h2>
-              {collection === "top-deals" ? (
-                <>
-                  Savings that<br />
-                  <em>move first.</em>
-                </>
-              ) : (
-                <>
-                  A sharper edit.<br />
-                  <em>Picked to move.</em>
-                </>
-              )}
-            </h2>
-            <span>
-              {collection === "top-deals"
-                ? `Up to ${getDiscount(runwayProduct)}% off this drop`
-                : `${runwayProduct.stock} ready to dispatch`}
-            </span>
-            <Link to={`/product/${runwayProduct.id}`}>
-              Meet the lead find <ChevronDown size={16} />
-            </Link>
-          </div>
-          <figure>
-            <SafeImage src={runwayProduct.image} alt={runwayProduct.name} />
-            <figcaption>
-              <small>{runwayProduct.brand}</small>
-              <b>{runwayProduct.name}</b>
-              <strong>{formatINR(runwayProduct.price)}</strong>
-            </figcaption>
-            <i>⚡</i>
-          </figure>
-        </section>
+        <CategoryHero
+          categoryTitle={catalogLabel}
+          itemCount={results.length}
+          featuredProduct={runwayProduct}
+          heroImage={runwayProduct.image}
+        />
       )}
 
       <div className={`catalog-layout ${showFilters ? "catalog-layout--has-filters" : "catalog-layout--full"}`}>
