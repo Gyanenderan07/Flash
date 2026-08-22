@@ -71,32 +71,35 @@ export default function QuickCartDrawer({
             <div className="flex-1 overflow-y-auto p-5 space-y-4">
               {activeLines.length ? (
                 activeLines.map((line) => {
-                  const product = getProduct(line.productId);
-                  if (!product) return null;
+                  const staticP = getProduct(line.productId);
+                  const itemName = line.name || staticP?.name || "Flash Product";
+                  const itemPrice = line.price ?? staticP?.price ?? 0;
+                  const itemImage = line.image || staticP?.image || "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=800&auto=format&fit=crop&q=80";
+
                   return (
                     <article
                       key={`${line.productId}-${line.variantSku ?? line.color}-${line.size}`}
                       className="flex items-center justify-between gap-3 p-3 rounded-2xl bg-[#F8FAFC] border border-gray-100 shadow-sm"
                     >
                       <div className="w-16 h-16 rounded-xl overflow-hidden bg-white border border-gray-200 flex-shrink-0 flex items-center justify-center">
-                        <SafeImage src={line.image ?? product.image} alt={product.name} className="w-full h-full object-cover" />
+                        <SafeImage src={itemImage} alt={itemName} className="w-full h-full object-cover" />
                       </div>
 
                       <div className="flex-1 min-w-0">
                         <b className="block text-xs font-bold text-[#0F1115] truncate">
-                          {product.name}
+                          {itemName}
                         </b>
                         <span className="block text-[11px] text-gray-500 font-medium truncate">
                           {line.colorName ?? line.color ?? "Standard"} · Qty {line.quantity}
                         </span>
                         <small className="block text-xs font-extrabold text-[#0F1115] mt-0.5">
-                          {formatINR(product.price * line.quantity)}
+                          {formatINR(itemPrice * line.quantity)}
                         </small>
                       </div>
 
                       <button
                         type="button"
-                        aria-label={`Remove ${product.name}`}
+                        aria-label={`Remove ${itemName}`}
                         onClick={() =>
                           removeFromCart({
                             productId: line.productId,

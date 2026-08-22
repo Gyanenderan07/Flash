@@ -4,11 +4,25 @@
  */
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
 import { toast } from "sonner";
-import { getProduct, getProductVariant, type Product } from "@/data/mockProducts";
+import { getProduct, getProductVariant } from "@/data/mockProducts";
 
 import { supabase } from "@/lib/supabase";
 
-export type CartLine = { productId: string; quantity: number; color?: string; colorName?: string; variantSku?: string; image?: string; size?: string; saved?: boolean };
+export type CartLine = {
+  productId: string;
+  name?: string;
+  price?: number;
+  mrp?: number;
+  quantity: number;
+  category?: string;
+  color?: string;
+  colorName?: string;
+  variantSku?: string;
+  image?: string;
+  size?: string;
+  saved?: boolean;
+};
+
 type CartLineRef = Pick<CartLine, "productId" | "color" | "size" | "variantSku">;
 export type Address = { id: string; label: string; name: string; line1: string; city: string; state: string; pincode: string; phone: string; isDefault?: boolean };
 export type Order = { id: string; createdAt: string; status: "Processing" | "In Transit" | "Delivered"; lines: CartLine[]; total: number; addressId: string };
@@ -26,7 +40,7 @@ type CommerceValue = {
   couponDiscount: number;
   deliveryFee: number;
   total: number;
-  addToCart: (product: Product, options?: { color?: string; colorName?: string; variantSku?: string; image?: string; size?: string; quantity?: number }) => void;
+  addToCart: (product: any, options?: { color?: string; colorName?: string; variantSku?: string; image?: string; size?: string; quantity?: number }) => void;
   updateQuantity: (line: CartLineRef | string, quantity: number) => void;
   removeFromCart: (line: CartLineRef | string) => void;
   moveToWishlist: (line: CartLineRef | string) => void;
@@ -40,42 +54,66 @@ type CommerceValue = {
   createOrder: (addressId: string) => Order | null;
 };
 
-const STORAGE_KEY = "flash-commerce-state-v2";
 const CommerceContext = createContext<CommerceValue | null>(null);
 
-function readPersisted() {
-  try { return JSON.parse(localStorage.getItem(STORAGE_KEY) ?? "{}"); } catch { return {}; }
-}
-
 export function CommerceProvider({ children }: { children: ReactNode }) {
-  const persisted = readPersisted();
-  const [cart, setCart] = useState<CartLine[]>(Array.isArray(persisted.cart) ? persisted.cart : []);
-  const [wishlistIds, setWishlistIds] = useState<string[]>(Array.isArray(persisted.wishlistIds) ? persisted.wishlistIds : []);
-  const [searchQuery, setSearchQuery] = useState(persisted.searchQuery ?? "");
-  const [couponCode, setCouponCode] = useState<string | null>(persisted.couponCode ?? null);
-  const [addresses, setAddresses] = useState<Address[]>(Array.isArray(persisted.addresses) ? persisted.addresses : []);
-  const [orders, setOrders] = useState<Order[]>(Array.isArray(persisted.orders) ? persisted.orders : []);
+  const [cart, setCart] = useState<CartLine[]>(() => {
+    try {
+      const stored = localStorage.getItem("flash_cart");
+      return stored ? JSON.parse(stored) : [];
+    } catch { return []; }
+  });
+  const [wishlistIds, setWishlistIds] = useState<string[]>(() => {
+    try {
+      const stored = localStorage.getItem("flash_wishlist");
+      return stored ? JSON.parse(stored) : [];
+    } catch { return []; }
+  });
+  const [searchQuery, setSearchQuery] = useState("");
+  const [couponCode, setCouponCode] = useState<string | null>(null);
+  const [addresses, setAddresses] = useState<Address[]>([]);
+  const [orders, setOrders] = useState<Order[]>([]);
 
-  useEffect(() => {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify({ cart, wishlistIds, searchQuery, couponCode, addresses, orders }));
-  }, [cart, wishlistIds, searchQuery, couponCode, addresses, orders]);
-
-  useEffect(() => { localStorage.removeItem("flash-commerce-state-v1"); }, []);
+  useEffect(() => { localStorage.setItem("flash_cart", JSON.stringify(cart)); }, [cart]);
+  useEffect(() => { localStorage.setItem("flash_wishlist", JSON.stringify(wishlistIds)); }, [wishlistIds]);
 
   const matchLine = (line: CartLine, reference: CartLineRef | string) => typeof reference === "string" ? line.productId === reference : line.productId === reference.productId && line.color === reference.color && line.size === reference.size && line.variantSku === reference.variantSku;
-  const addToCart = useCallback((product: Product, options: { color?: string; colorName?: string; variantSku?: string; image?: string; size?: string; quantity?: number } = {}) => {
+  
+  const addToCart = useCallback((product: any, options: { color?: string; colorName?: string; variantSku?: string; image?: string; size?: string; quantity?: number } = {}) => {
     const quantity = options.quantity ?? 1;
     const variant = getProductVariant(product, options.color);
-    const color = options.color ?? variant?.color ?? product.colors[0];
+    const color = options.color ?? variant?.color ?? (Array.isArray(product.colors) ? (typeof product.colors[0] === 'string' ? product.colors[0] : product.colors[0]?.hex) : '#0F1115');
     const variantSku = options.variantSku ?? variant?.sku;
-    const colorName = options.colorName ?? variant?.name;
-    const image = options.image ?? variant?.image ?? product.image;
+    const colorName = options.colorName ?? variant?.name ?? 'Standard';
+    const image = options.image ?? variant?.image ?? product.primaryImage ?? product.primary_image ?? product.image;
+    const name = product.name || product.title || 'Flash Product';
+    const price = Number(product.price) || 0;
+    const mrp = Number(product.mrp || product.originalPrice || product.original_price || price);
+
     setCart((current) => {
-      const existing = current.find((line) => line.productId === product.id && line.variantSku === variantSku && line.size === options.size);
-      return existing ? current.map((line) => line === existing ? { ...line, quantity: line.quantity + quantity, saved: false } : line) : [...current, { productId: product.id, quantity, color, colorName, variantSku, image, size: options.size }];
+      const existing = current.find((line) => line.productId === String(product.id) && line.variantSku === variantSku && line.size === options.size);
+      return existing
+        ? current.map((line) => line === existing ? { ...line, quantity: line.quantity + quantity, saved: false } : line)
+        : [
+            ...current,
+            {
+              productId: String(product.id),
+              name,
+              price,
+              mrp,
+              quantity,
+              category: product.category,
+              color,
+              colorName,
+              variantSku,
+              image,
+              size: options.size,
+            },
+          ];
     });
-    toast.success(`${product.name} added to cart`);
+    toast.success(`${name} added to cart`);
   }, []);
+
   const updateQuantity = useCallback((lineRef: CartLineRef | string, quantity: number) => setCart((current) => current.map((line) => matchLine(line, lineRef) ? { ...line, quantity: Math.max(1, quantity) } : line)), []);
   const removeFromCart = useCallback((lineRef: CartLineRef | string) => { setCart((current) => current.filter((line) => !matchLine(line, lineRef))); toast("Item removed from cart"); }, []);
   const toggleWishlist = useCallback((productId: string) => setWishlistIds((current) => current.includes(productId) ? current.filter((id) => id !== productId) : [...current, productId]), []);
@@ -106,8 +144,17 @@ export function CommerceProvider({ children }: { children: ReactNode }) {
 
   const summaries = useMemo(() => {
     const active = cart.filter((line) => !line.saved);
-    const subtotal = active.reduce((sum, line) => sum + (getProduct(line.productId)?.price ?? 0) * line.quantity, 0);
-    const savings = active.reduce((sum, line) => { const product = getProduct(line.productId); return product ? sum + (product.mrp - product.price) * line.quantity : sum; }, 0);
+    const subtotal = active.reduce((sum, line) => {
+      const p = getProduct(line.productId);
+      const linePrice = line.price ?? p?.price ?? 0;
+      return sum + linePrice * line.quantity;
+    }, 0);
+    const savings = active.reduce((sum, line) => {
+      const p = getProduct(line.productId);
+      const linePrice = line.price ?? p?.price ?? 0;
+      const lineMrp = line.mrp ?? p?.mrp ?? linePrice;
+      return sum + Math.max(0, lineMrp - linePrice) * line.quantity;
+    }, 0);
     const couponDiscount = couponCode === "FLASH10" ? Math.round(subtotal * 0.1) : 0;
     const deliveryFee = subtotal === 0 || subtotal >= 499 ? 0 : 99;
     return { subtotal, savings, couponDiscount, deliveryFee, total: Math.max(0, subtotal - couponDiscount + deliveryFee), cartCount: active.reduce((sum, line) => sum + line.quantity, 0) };

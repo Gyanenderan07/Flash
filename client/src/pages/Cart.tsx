@@ -32,8 +32,28 @@ export default function Cart() {
 
   const activeLines: CartLineItem[] = cart
     .filter((line) => !line.saved)
-    .map((line) => ({ ...line, product: getProduct(line.productId) }))
-    .filter((line): line is CartLineItem => Boolean(line.product));
+    .map((line) => {
+      const staticP = getProduct(line.productId);
+      const product: any = staticP ?? {
+        id: line.productId,
+        name: line.name || "Flash Product",
+        brand: "Flash",
+        category: (line.category || "Home & Living") as any,
+        subcategory: "General",
+        price: line.price || 0,
+        mrp: line.mrp || line.price || 0,
+        stock: 10,
+        express: true,
+        isNew: true,
+        image: line.image || "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=800&auto=format&fit=crop&q=80",
+        gallery: [line.image || "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=800&auto=format&fit=crop&q=80"],
+        description: "Verified Flash merchant product.",
+        highlights: ["Authentic quality guarantee", "Fast dispatch eligible"],
+        colors: [line.color || "#0F1115"],
+        sku: line.variantSku || `FL-DB-${line.productId}`,
+      };
+      return { ...line, product };
+    });
 
   const deliveryGap = Math.max(0, 499 - subtotal);
 

@@ -98,9 +98,8 @@ export default function ProductCard({
       </button>
 
       <Link
-        className="commerce-product-card__media"
+        className="commerce-product-card__media relative w-full aspect-square bg-[#F4F4F5] dark:bg-[#15181E] rounded-2xl overflow-hidden group block"
         to={`/product/${product.id}`}
-        style={{ position: "relative", overflow: "hidden", display: "block" }}
       >
         <AnimatePresence mode="wait">
           <motion.div
@@ -109,14 +108,14 @@ export default function ProductCard({
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.3, ease: "easeInOut" }}
-            style={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center" }}
+            className="w-full h-full flex items-center justify-center"
           >
             <motion.div
-              animate={{ scale: isHovered ? 1.04 : 1.0 }}
+              animate={{ scale: isHovered ? 1.05 : 1.0 }}
               transition={{ duration: 0.3, ease: "easeOut" }}
-              style={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center" }}
+              className="w-full h-full flex items-center justify-center"
             >
-              <SafeImage src={currentImageUrl} alt={product.name} />
+              <SafeImage src={currentImageUrl} alt={product.name} className="w-full h-full object-cover object-center" />
             </motion.div>
           </motion.div>
         </AnimatePresence>
