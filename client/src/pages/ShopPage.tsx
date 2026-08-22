@@ -142,17 +142,17 @@ export default function ShopPage() {
           </div>
 
           <div className="flex items-center gap-3">
-            {/* Signature Filter Button */}
+            {/* High-Contrast Flash Signature Filter Button */}
             <button
               type="button"
               onClick={() => setIsFilterDrawerOpen(true)}
-              className={`relative group inline-flex items-center gap-2.5 px-5 py-2.5 rounded-full bg-[#000000] text-[#CCFF00] font-black text-xs tracking-wider uppercase border transition-all duration-200 shadow-md cursor-pointer ${
+              className={`relative group inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-[#000000] text-[#CCFF00] font-black text-xs tracking-widest uppercase border transition-all duration-200 shadow-md cursor-pointer ${
                 isFilterDrawerOpen || activeFilterCount > 0
-                  ? 'border-[#CCFF00] shadow-[0_0_15px_rgba(204,255,0,0.25)]'
-                  : 'border-[#000000] hover:border-[#CCFF00]/50 hover:shadow-[0_0_12px_rgba(204,255,0,0.18)] hover:-translate-y-0.5'
+                  ? 'border-[#CCFF00] shadow-[0_0_16px_rgba(204,255,0,0.3)]'
+                  : 'border-neutral-900 hover:border-[#CCFF00]/80 hover:shadow-[0_0_14px_rgba(204,255,0,0.22)] hover:-translate-y-0.5'
               } active:scale-95`}
             >
-              {/* Custom 3-Line Filter Icon in #CCFF00 */}
+              {/* Flash Signature Neon Icon */}
               <svg 
                 className="w-4 h-4 text-[#CCFF00] transition-transform duration-200 group-hover:scale-110" 
                 viewBox="0 0 24 24" 
@@ -167,11 +167,11 @@ export default function ShopPage() {
                 <line x1="10" y1="18" x2="14" y2="18"></line>
               </svg>
 
-              <span>FILTERS</span>
+              <span className="font-extrabold tracking-wider">FILTERS</span>
 
               {/* Active Count Badge */}
               {activeFilterCount > 0 && (
-                <span className="flex items-center justify-center min-w-[20px] h-5 px-1.5 text-[11px] font-black bg-[#CCFF00] text-[#000000] rounded-full">
+                <span className="flex items-center justify-center min-w-[20px] h-5 px-1.5 text-[10px] font-black bg-[#CCFF00] text-[#000000] rounded-full shadow-sm">
                   {activeFilterCount}
                 </span>
               )}
