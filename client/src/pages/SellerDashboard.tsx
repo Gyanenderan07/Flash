@@ -13,6 +13,7 @@ import {
   CheckCircle2,
   Database,
   Trash2,
+  Pencil,
   ArrowUpRight,
   ShieldCheck,
 } from "lucide-react";
@@ -85,6 +86,38 @@ export default function SellerDashboard() {
     }
   };
 
+  const [editingProductId, setEditingProductId] = useState<string | null>(null);
+
+  const handleOpenAddModal = () => {
+    setEditingProductId(null);
+    setFormData({
+      name: "",
+      brand: "",
+      category: "home-living",
+      price: "",
+      originalPrice: "",
+      stock: "10",
+      description: "",
+      image: "",
+    });
+    setIsModalOpen(true);
+  };
+
+  const handleOpenEditModal = (product: any) => {
+    setEditingProductId(product.id);
+    setFormData({
+      name: product.name || product.title || "",
+      brand: product.brand || "Flash",
+      category: product.category || "home-living",
+      price: String(product.price || ""),
+      originalPrice: String(product.original_price || product.mrp || ""),
+      stock: String(product.stock ?? 10),
+      description: product.description || "",
+      image: product.primary_image || product.image || "",
+    });
+    setIsModalOpen(true);
+  };
+
   const handleAddProductSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
@@ -118,16 +151,33 @@ export default function SellerDashboard() {
         colors: [{ name: "Obsidian", hex: "#0F1115" }],
       };
 
-      const { data, error } = await supabase.from("products").insert([payload]).select();
+      if (editingProductId) {
+        const { error } = await supabase
+          .from("products")
+          .update(payload)
+          .eq("id", editingProductId);
 
-      if (error) {
-        console.error("Supabase DB Insert Error:", error);
-        alert("DB Error: " + error.message);
-        return;
+        if (error) {
+          console.error("Supabase DB Update Error:", error);
+          alert("DB Update Error: " + error.message);
+          return;
+        }
+
+        alert("Product successfully updated in Supabase DB!");
+      } else {
+        const { error } = await supabase.from("products").insert([payload]).select();
+
+        if (error) {
+          console.error("Supabase DB Insert Error:", error);
+          alert("DB Error: " + error.message);
+          return;
+        }
+
+        alert("Product successfully added to Supabase DB!");
       }
 
-      alert("Product successfully added to Supabase DB!");
       setIsModalOpen(false);
+      setEditingProductId(null);
 
       setFormData({
         name: "",
@@ -194,7 +244,7 @@ export default function SellerDashboard() {
 
           <div className="relative z-10 flex items-center gap-3 flex-wrap">
             <button
-              onClick={() => setIsModalOpen(true)}
+              onClick={handleOpenAddModal}
               style={{ backgroundColor: "#CCFF00", color: "#0F1115" }}
               className="px-5 py-3 rounded-2xl bg-[#CCFF00] text-[#0F1115] font-black text-xs uppercase tracking-wider flex items-center gap-2 hover:bg-[#D4F800] active:scale-95 transition-all shadow-lg shadow-[#CCFF00]/20 cursor-pointer border-none"
             >
@@ -335,13 +385,22 @@ export default function SellerDashboard() {
                         </span>
                       </td>
                       <td className="py-3 px-2 text-right">
-                        <button
-                          onClick={() => handleDeleteProduct(product.id, name)}
-                          className="p-1.5 text-neutral-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors cursor-pointer"
-                          title="Delete product"
-                        >
-                          <Trash2 size={15} />
-                        </button>
+                        <div className="flex items-center justify-end gap-1.5">
+                          <button
+                            onClick={() => handleOpenEditModal(product)}
+                            className="p-1.5 text-neutral-500 hover:text-black hover:bg-neutral-100 rounded-lg transition-colors cursor-pointer"
+                            title="Edit product"
+                          >
+                            <Pencil size={15} />
+                          </button>
+                          <button
+                            onClick={() => handleDeleteProduct(product.id, name)}
+                            className="p-1.5 text-neutral-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors cursor-pointer"
+                            title="Delete product"
+                          >
+                            <Trash2 size={15} />
+                          </button>
+                        </div>
                       </td>
                     </tr>
                   );
@@ -357,7 +416,9 @@ export default function SellerDashboard() {
         <div className="fixed inset-0 z-50 bg-[#0F1115]/70 backdrop-blur-sm flex items-center justify-center p-4">
           <div className="bg-white border border-neutral-200 rounded-3xl p-6 sm:p-8 max-w-lg w-full shadow-2xl space-y-6 animate-in fade-in zoom-in-95 duration-150">
             <div className="flex items-center justify-between border-b border-neutral-100 pb-4">
-              <h3 className="text-lg font-black text-[#0F1115]">Add Product to Supabase DB</h3>
+              <h3 className="text-lg font-black text-[#0F1115]">
+                {editingProductId ? "Edit Catalog Product" : "Add Product to Supabase DB"}
+              </h3>
               <button
                 onClick={() => setIsModalOpen(false)}
                 className="text-neutral-400 hover:text-[#0F1115] text-sm font-bold"

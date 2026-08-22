@@ -1,9 +1,76 @@
 /**
  * Global Product Service (`client/src/services/productService.ts`)
- * Unifies data fetching & sanitizes Supabase product rows so all items render dynamically.
+ * Unifies live Supabase data fetching & sanitizes product rows so all items render dynamically.
  */
 import { supabase } from "../lib/supabase";
 import { products as defaultProducts, type Product, type ProductCategory, categoryOrder } from "../data/mockProducts";
+
+export interface StoreProduct {
+  id: string;
+  name: string;
+  brand: string;
+  category: string;
+  price: number;
+  originalPrice: number;
+  discount: string;
+  stock: number;
+  description: string;
+  primaryImage: string;
+  hoverImage: string;
+  colors: { name: string; hex: string }[];
+  rating: number;
+  reviewsCount: number;
+  isNew: boolean;
+  isExpress: boolean;
+}
+
+export const fetchAllLiveProducts = async (): Promise<StoreProduct[]> => {
+  try {
+    const { data, error } = await supabase
+      .from("products")
+      .select("*")
+      .order("created_at", { ascending: false });
+
+    if (error) {
+      console.error("Error fetching Supabase products:", error);
+      return [];
+    }
+
+    if (!data || data.length === 0) return [];
+
+    return data.map((p) => {
+      const rawCategory = (p.category || "electronics").toLowerCase().trim();
+      const cleanCategory = rawCategory.replace(/[\s&]+/g, "-");
+      const numPrice = Number(p.price) || 0;
+      const numOriginal = Number(p.original_price || p.price) || numPrice;
+      const calculatedDiscount = p.discount || (numOriginal > numPrice 
+        ? `-${Math.round(((numOriginal - numPrice) / numOriginal) * 100)}%` 
+        : "-0%");
+
+      return {
+        id: String(p.id),
+        name: p.name || p.title || "Flash Product",
+        brand: p.brand || "Flash",
+        category: cleanCategory,
+        price: numPrice,
+        originalPrice: numOriginal,
+        discount: calculatedDiscount,
+        stock: p.stock ?? 10,
+        description: p.description || "",
+        primaryImage: p.primary_image || p.image || "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?auto=format&fit=crop&w=800&q=80",
+        hoverImage: (Array.isArray(p.hover_images) && p.hover_images[0]) || p.primary_image || p.image || "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?auto=format&fit=crop&w=800&q=80",
+        colors: Array.isArray(p.colors) && p.colors.length > 0 ? p.colors : [{ name: "Obsidian", hex: "#0F1115" }],
+        rating: 4.9,
+        reviewsCount: 24,
+        isNew: true,
+        isExpress: true,
+      };
+    });
+  } catch (err) {
+    console.error("Unexpected error loading live products:", err);
+    return [];
+  }
+};
 
 export const getLiveStoreProducts = async (): Promise<Product[]> => {
   try {
