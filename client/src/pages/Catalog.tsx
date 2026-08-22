@@ -1,18 +1,28 @@
 /**
  * Flash catalog — preserve Supercharged Editorial Commerce with paper-white density,
- * heavy Space Grotesk hierarchy, and dynamic 4-column expansion.
+ * heavy Space Grotesk hierarchy, dynamic 4-column expansion, and modern filter system.
  */
 import { useEffect, useMemo, useState } from "react";
-import { Grid2X2, List, Search, Sparkles, X } from "lucide-react";
+import { Grid2X2, List, Search, SlidersHorizontal, Sparkles, X } from "lucide-react";
 import { Link, useParams, useSearchParams } from "react-router-dom";
 import ProductCard from "@/components/ProductCard";
 import CategoryHero from "@/components/CategoryHero";
 import Pagination from "@/components/Pagination";
 import SafeImage from "@/components/common/SafeImage";
+import FilterDrawer from "@/components/FilterDrawer";
+import ActiveFilterChips from "@/components/ActiveFilterChips";
 import { categoryOrder, formatINR, getDiscount, products, type Product, type ProductCategory } from "@/data/mockProducts";
 import { useCommerce } from "@/contexts/CommerceContext";
-
 import { getLiveStoreProducts } from "@/services/productService";
+import {
+  calculatePriceBounds,
+  createDefaultFilters,
+  filterProducts,
+  countActiveFilters,
+  getActiveChips,
+  type FilterState,
+  type ActiveChip,
+} from "@/lib/productFilterEngine";
 
 function slugToCategory(slug?: string) {
   if (!slug) return null;
@@ -30,19 +40,16 @@ export default function Catalog() {
   const { categoryName } = useParams();
   const [searchParams, setSearchParams] = useSearchParams();
   const { searchQuery, setSearchQuery, addToCart } = useCommerce();
+
   const categoryFromRoute = slugToCategory(categoryName);
   const categoryFromQuery = slugToCategory(searchParams.get("category") ?? undefined);
   const categoryFromLocation = categoryFromRoute ?? categoryFromQuery;
   const collection = searchParams.get("collection") ?? "";
-  
-  const [selectedCategory, setSelectedCategory] = useState<ProductCategory | "All">(categoryFromLocation ?? "All");
+
   const [view, setView] = useState<"grid" | "list">("grid");
   const [quickView, setQuickView] = useState<Product | null>(null);
   const [allProducts, setAllProducts] = useState<Product[]>(products);
-
-  useEffect(() => {
-    setSelectedCategory(categoryFromLocation ?? "All");
-  }, [categoryFromLocation]);
+  const [isDrawerOpen, setIsDrawerOpen] = useState(false);
 
   useEffect(() => {
     async function loadLiveProducts() {
@@ -52,49 +59,151 @@ export default function Catalog() {
     loadLiveProducts();
   }, []);
 
+  // Compute dataset bounds
+  const priceBounds = useMemo(() => calculatePriceBounds(allProducts), [allProducts]);
+
+  // Read filter state from URL or initialize
+  const initialFilters = useMemo<FilterState>(() => {
+    const categoriesParam = searchParams.get("categories") || searchParams.get("category");
+    const minPriceParam = searchParams.get("minPrice");
+    const maxPriceParam = searchParams.get("maxPrice");
+    const discountParam = searchParams.get("discount");
+    const inStockParam = searchParams.get("inStock");
+    const expressParam = searchParams.get("express");
+
+    const categories: ProductCategory[] = [];
+    if (categoriesParam) {
+      const list = categoriesParam.split(",");
+      for (const item of list) {
+        const match = categoryOrder.find(
+          (c) => c.toLowerCase().replace(/[^a-z0-9]/g, "") === item.toLowerCase().replace(/[^a-z0-9]/g, "")
+        );
+        if (match && !categories.includes(match)) {
+          categories.push(match);
+        }
+      }
+    } else if (categoryFromLocation) {
+      categories.push(categoryFromLocation);
+    }
+
+    return {
+      categories,
+      minPrice: minPriceParam ? Math.max(priceBounds.minPrice, Number(minPriceParam)) : priceBounds.minPrice,
+      maxPrice: maxPriceParam ? Math.min(priceBounds.maxPrice, Number(maxPriceParam)) : priceBounds.maxPrice,
+      minDiscount: discountParam ? Number(discountParam) : 0,
+      inStockOnly: inStockParam === "true",
+      expressOnly: expressParam === "true",
+    };
+  }, [searchParams, categoryFromLocation, priceBounds]);
+
+  const [filters, setFilters] = useState<FilterState>(initialFilters);
+
+  // Sync filters if URL changes externally
+  useEffect(() => {
+    setFilters(initialFilters);
+  }, [initialFilters]);
+
+  // Sync state changes with URL query parameters
+  const updateFilters = (newFilters: FilterState) => {
+    setFilters(newFilters);
+    const nextParams = new URLSearchParams(searchParams);
+
+    if (newFilters.categories.length > 0) {
+      nextParams.set(
+        "categories",
+        newFilters.categories.map((c) => c.toLowerCase().replace(/\s+/g, "-")).join(",")
+      );
+      nextParams.delete("category");
+    } else {
+      nextParams.delete("categories");
+      nextParams.delete("category");
+    }
+
+    if (newFilters.minPrice > priceBounds.minPrice) {
+      nextParams.set("minPrice", String(newFilters.minPrice));
+    } else {
+      nextParams.delete("minPrice");
+    }
+
+    if (newFilters.maxPrice < priceBounds.maxPrice) {
+      nextParams.set("maxPrice", String(newFilters.maxPrice));
+    } else {
+      nextParams.delete("maxPrice");
+    }
+
+    if (newFilters.minDiscount > 0) {
+      nextParams.set("discount", String(newFilters.minDiscount));
+    } else {
+      nextParams.delete("discount");
+    }
+
+    if (newFilters.inStockOnly) {
+      nextParams.set("inStock", "true");
+    } else {
+      nextParams.delete("inStock");
+    }
+
+    if (newFilters.expressOnly) {
+      nextParams.set("express", "true");
+    } else {
+      nextParams.delete("express");
+    }
+
+    setSearchParams(nextParams);
+  };
+
+  const handleResetFilters = () => {
+    const defaults = createDefaultFilters(priceBounds);
+    updateFilters(defaults);
+  };
+
+  const handleRemoveChip = (chip: ActiveChip) => {
+    const next = { ...filters };
+    if (chip.type === "categories" && chip.value) {
+      next.categories = next.categories.filter((c) => c !== chip.value);
+    } else if (chip.type === "minPrice" || chip.type === "maxPrice") {
+      next.minPrice = priceBounds.minPrice;
+      next.maxPrice = priceBounds.maxPrice;
+    } else if (chip.type === "minDiscount") {
+      next.minDiscount = 0;
+    } else if (chip.type === "inStockOnly") {
+      next.inStockOnly = false;
+    } else if (chip.type === "expressOnly") {
+      next.expressOnly = false;
+    }
+    updateFilters(next);
+  };
+
   const query = (searchParams.get("search") ?? searchQuery).trim().toLowerCase();
   const sort = searchParams.get("sort") ?? "featured";
 
-  const results = useMemo(
-    () =>
-      allProducts
-        .filter((product) => {
-          const matchesQuery =
-            !query ||
-            `${product.name} ${product.brand} ${product.category} ${product.subcategory}`
-              .toLowerCase()
-              .includes(query);
-          const matchesCollection =
-            collection === "new-in"
-              ? Boolean(product.isNew)
-              : collection === "top-deals"
-              ? getDiscount(product) >= 40
-              : true;
-          return (
-            matchesQuery &&
-            matchesCollection &&
-            (selectedCategory === "All" || product.category === selectedCategory)
-          );
-        })
-        .sort((a, b) =>
-          sort === "low"
-            ? a.price - b.price
-            : sort === "high"
-            ? b.price - a.price
-            : collection === "new-in" || sort === "newest"
-            ? Number(Boolean(b.isNew)) - Number(Boolean(a.isNew)) || b.id.localeCompare(a.id)
-            : collection === "top-deals" || sort === "discount"
-            ? getDiscount(b) - getDiscount(a)
-            : 0
-        ),
-    [
-      allProducts,
-      query,
-      selectedCategory,
-      sort,
-      collection,
-    ]
-  );
+  // Filtered & Sorted Product Pipeline
+  const results = useMemo(() => {
+    const filtered = filterProducts(allProducts, filters, query);
+
+    // Apply collection filter constraint if specified
+    const collectionFiltered = filtered.filter((product) => {
+      if (collection === "new-in") return Boolean(product.isNew);
+      if (collection === "top-deals") return getDiscount(product) >= 40;
+      return true;
+    });
+
+    // Apply sorting method
+    return collectionFiltered.sort((a, b) =>
+      sort === "low"
+        ? a.price - b.price
+        : sort === "high"
+        ? b.price - a.price
+        : collection === "new-in" || sort === "newest"
+        ? Number(Boolean(b.isNew)) - Number(Boolean(a.isNew)) || b.id.localeCompare(a.id)
+        : collection === "top-deals" || sort === "discount"
+        ? getDiscount(b) - getDiscount(a)
+        : 0
+    );
+  }, [allProducts, filters, query, collection, sort]);
+
+  const activeFilterCount = countActiveFilters(filters, priceBounds);
+  const activeChips = getActiveChips(filters, priceBounds);
 
   const setSort = (value: string) => {
     const next = new URLSearchParams(searchParams);
@@ -115,12 +224,7 @@ export default function Catalog() {
 
   useEffect(() => {
     setCurrentPage(1);
-  }, [
-    selectedCategory,
-    query,
-    sort,
-    collection,
-  ]);
+  }, [filters, query, sort, collection]);
 
   const totalPages = Math.ceil(results.length / ITEMS_PER_PAGE);
   const paginatedProducts = useMemo(
@@ -180,12 +284,38 @@ export default function Catalog() {
 
       <div className="catalog-layout catalog-layout--full">
         <div className="catalog-results">
+          {/* CONTROL BAR */}
           <div className="catalog-controls">
             <p>
               Showing <b>{results.length ? Math.min((currentPage - 1) * ITEMS_PER_PAGE + 1, results.length) : 0}</b>–<b>{Math.min(currentPage * ITEMS_PER_PAGE, results.length)}</b> of <b>{results.length}</b> products
               {catalogLabel !== "The Flash edit" && <> in <b>{catalogLabel}</b></>}
             </p>
+
             <div className="catalog-controls__actions">
+              {/* FILTERS BUTTON */}
+              <button
+                type="button"
+                onClick={() => setIsDrawerOpen(true)}
+                aria-label="Open filter panel"
+                className={`inline-flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-black transition-all border cursor-pointer ${
+                  activeFilterCount > 0
+                    ? "bg-[#0F1115] text-[#CCFF00] border-[#CCFF00] shadow-sm"
+                    : "bg-white dark:bg-[#12151B] text-neutral-900 dark:text-white border-neutral-200 dark:border-neutral-800 hover:border-neutral-400"
+                }`}
+              >
+                <SlidersHorizontal
+                  size={15}
+                  className={activeFilterCount > 0 ? "text-[#CCFF00]" : "text-neutral-600 dark:text-neutral-300"}
+                />
+                <span>Filters</span>
+                {activeFilterCount > 0 && (
+                  <span className="inline-grid place-items-center w-5 h-5 rounded-full bg-[#CCFF00] text-[#0F1115] text-[10px] font-black">
+                    {activeFilterCount}
+                  </span>
+                )}
+              </button>
+
+              {/* VIEW SWITCH */}
               <div className="view-switch">
                 <button
                   className={view === "grid" ? "is-active" : ""}
@@ -202,6 +332,8 @@ export default function Catalog() {
                   <List size={17} />
                 </button>
               </div>
+
+              {/* SORT SELECT */}
               <label className="sort-select">
                 Sort by
                 <select value={sort} onChange={(event) => setSort(event.target.value)}>
@@ -215,6 +347,14 @@ export default function Catalog() {
             </div>
           </div>
 
+          {/* ACTIVE FILTER CHIPS */}
+          <ActiveFilterChips
+            chips={activeChips}
+            onRemoveChip={handleRemoveChip}
+            onClearAll={handleResetFilters}
+          />
+
+          {/* PRODUCT GRID / EMPTY STATE */}
           {results.length ? (
             <div
               className={`catalog-grid catalog-grid--${view} ${
@@ -226,10 +366,21 @@ export default function Catalog() {
               ))}
             </div>
           ) : (
-            <div className="empty-catalog">
-              <Sparkles size={25} />
-              <h2>Nothing in this lane yet.</h2>
-              <p>Try searching for something else or explore other categories.</p>
+            <div className="bg-white dark:bg-[#12151B] border border-neutral-200/80 dark:border-neutral-800 rounded-3xl p-12 text-center space-y-4 shadow-sm my-6">
+              <Sparkles size={32} className="mx-auto text-[#CCFF00]" />
+              <h3 className="text-xl font-black text-neutral-900 dark:text-white tracking-tight">
+                No products found
+              </h3>
+              <p className="text-xs font-medium text-neutral-500 max-w-sm mx-auto">
+                No products match your selected filter criteria. Try adjusting or clearing your filters.
+              </p>
+              <button
+                type="button"
+                onClick={handleResetFilters}
+                className="inline-flex items-center gap-2 px-5 py-2.5 rounded-2xl bg-[#CCFF00] text-[#0F1115] text-xs font-black hover:bg-[#b8e600] transition-colors cursor-pointer border-none shadow-sm"
+              >
+                Clear Filters
+              </button>
             </div>
           )}
 
@@ -241,6 +392,18 @@ export default function Catalog() {
         </div>
       </div>
 
+      {/* FILTER DRAWER */}
+      <FilterDrawer
+        isOpen={isDrawerOpen}
+        onClose={() => setIsDrawerOpen(false)}
+        filters={filters}
+        bounds={priceBounds}
+        allProducts={allProducts}
+        onApplyFilters={updateFilters}
+        onResetFilters={handleResetFilters}
+      />
+
+      {/* QUICK VIEW MODAL */}
       {quickView && (
         <div className="quick-view-backdrop" role="presentation" onMouseDown={() => setQuickView(null)}>
           <article
@@ -287,4 +450,5 @@ export default function Catalog() {
     </section>
   );
 }
+
 
