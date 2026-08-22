@@ -70,7 +70,7 @@ export default function ProductDetail() {
             </button>
           ))}
         </div>
-        <div className={`pdp-media w-full aspect-square max-h-[520px] rounded-3xl bg-[#F4F4F5] dark:bg-[#12151B] p-4 sm:p-8 flex items-center justify-center overflow-hidden border border-neutral-200/60 dark:border-neutral-800 relative ${zoomed ? "is-zoomed" : ""}`} onMouseEnter={() => setZoomed(true)} onMouseLeave={() => setZoomed(false)}>
+        <div className="w-full aspect-square max-h-[540px] rounded-3xl bg-[#F4F4F5] dark:bg-[#12151B] p-6 sm:p-10 flex items-center justify-center overflow-hidden border border-neutral-200/60 dark:border-neutral-800 relative">
           <AnimatePresence mode="wait">
             <motion.img
               key={`${activeVariant?.sku ?? product.sku}-${selectedImage}`}
@@ -81,12 +81,17 @@ export default function ProductDetail() {
               src={activeGallery[selectedImage] ?? activeGallery[0]}
               alt={`${product.name} in ${activeVariant?.name ?? "default"}`}
               onClick={() => setLightbox(true)}
-              className="max-w-full max-h-full object-contain object-center transition-all duration-300 hover:scale-105 cursor-pointer"
+              className="w-full h-full object-contain object-center transition-transform duration-300 hover:scale-105 cursor-pointer"
               onError={(e) => { const target = e.target as HTMLImageElement; if (!target.src.includes('unsplash.com')) target.src = 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=800&auto=format&fit=crop&q=80'; }}
             />
           </AnimatePresence>
-          <button className="zoom-button absolute bottom-4 right-4 bg-black/70 backdrop-blur-md text-white px-3 py-1.5 rounded-full text-xs font-bold flex items-center gap-1.5 hover:bg-black transition-all" onClick={() => setLightbox(true)}>
-            <ZoomIn size={14} /> Zoom
+          <button
+            type="button"
+            onClick={() => setLightbox(true)}
+            className="absolute bottom-4 right-4 flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/90 dark:bg-[#1A1D24]/90 backdrop-blur text-xs font-bold text-neutral-800 dark:text-neutral-200 border border-neutral-200 dark:border-neutral-700 shadow-sm hover:scale-105 transition-transform cursor-pointer"
+          >
+            <ZoomIn className="w-3.5 h-3.5" />
+            <span>Zoom</span>
           </button>
         </div>
       </div>
