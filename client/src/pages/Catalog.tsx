@@ -40,7 +40,7 @@ export default function Catalog() {
   const [showFilters, setShowFilters] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState<ProductCategory | "All">(categoryFromLocation ?? "All");
   const [selectedBrands, setSelectedBrands] = useState<string[]>([]);
-  const [priceFloor, setPriceFloor] = useState(499);
+  const [priceFloor, setPriceFloor] = useState(0);
   const [priceCeiling, setPriceCeiling] = useState(100000);
   const [minDiscount, setMinDiscount] = useState(0);
   const [inStockOnly, setInStockOnly] = useState(false);
