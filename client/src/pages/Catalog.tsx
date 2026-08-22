@@ -1,9 +1,9 @@
 /**
  * Flash catalog — preserve Supercharged Editorial Commerce with paper-white density,
- * heavy Space Grotesk hierarchy, on-demand toggleable filters, and dynamic 4-column expansion.
+ * heavy Space Grotesk hierarchy, and dynamic 4-column expansion.
  */
 import { useEffect, useMemo, useState } from "react";
-import { ChevronDown, Grid2X2, List, Search, SlidersHorizontal, Sparkles, X } from "lucide-react";
+import { Grid2X2, List, Search, Sparkles, X } from "lucide-react";
 import { Link, useParams, useSearchParams } from "react-router-dom";
 import ProductCard from "@/components/ProductCard";
 import CategoryHero from "@/components/CategoryHero";
@@ -13,8 +13,6 @@ import { categoryOrder, formatINR, getDiscount, products, type Product, type Pro
 import { useCommerce } from "@/contexts/CommerceContext";
 
 import { getLiveStoreProducts } from "@/services/productService";
-
-const brands = Array.from(new Set(products.map((product) => product.brand)));
 
 function slugToCategory(slug?: string) {
   if (!slug) return null;
@@ -37,14 +35,7 @@ export default function Catalog() {
   const categoryFromLocation = categoryFromRoute ?? categoryFromQuery;
   const collection = searchParams.get("collection") ?? "";
   
-  const [showFilters, setShowFilters] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState<ProductCategory | "All">(categoryFromLocation ?? "All");
-  const [selectedBrands, setSelectedBrands] = useState<string[]>([]);
-  const [priceFloor, setPriceFloor] = useState(0);
-  const [priceCeiling, setPriceCeiling] = useState(100000);
-  const [minDiscount, setMinDiscount] = useState(0);
-  const [inStockOnly, setInStockOnly] = useState(false);
-  const [expressOnly, setExpressOnly] = useState(false);
   const [view, setView] = useState<"grid" | "list">("grid");
   const [quickView, setQuickView] = useState<Product | null>(null);
   const [allProducts, setAllProducts] = useState<Product[]>(products);
@@ -64,14 +55,6 @@ export default function Catalog() {
   const query = (searchParams.get("search") ?? searchQuery).trim().toLowerCase();
   const sort = searchParams.get("sort") ?? "featured";
 
-  const activeFilterCount =
-    (selectedCategory !== "All" ? 1 : 0) +
-    selectedBrands.length +
-    (minDiscount > 0 ? 1 : 0) +
-    (inStockOnly ? 1 : 0) +
-    (expressOnly ? 1 : 0) +
-    (priceFloor > 499 || priceCeiling < 100000 ? 1 : 0);
-
   const results = useMemo(
     () =>
       allProducts
@@ -90,13 +73,7 @@ export default function Catalog() {
           return (
             matchesQuery &&
             matchesCollection &&
-            (selectedCategory === "All" || product.category === selectedCategory) &&
-            (selectedBrands.length === 0 || selectedBrands.includes(product.brand)) &&
-            product.price >= priceFloor &&
-            product.price <= priceCeiling &&
-            getDiscount(product) >= minDiscount &&
-            (!inStockOnly || product.stock > 0) &&
-            (!expressOnly || product.express)
+            (selectedCategory === "All" || product.category === selectedCategory)
           );
         })
         .sort((a, b) =>
@@ -114,12 +91,6 @@ export default function Catalog() {
       allProducts,
       query,
       selectedCategory,
-      selectedBrands,
-      priceFloor,
-      priceCeiling,
-      minDiscount,
-      inStockOnly,
-      expressOnly,
       sort,
       collection,
     ]
@@ -129,30 +100,6 @@ export default function Catalog() {
     const next = new URLSearchParams(searchParams);
     next.set("sort", value);
     setSearchParams(next);
-  };
-
-  const toggleBrand = (brand: string) =>
-    setSelectedBrands((current) =>
-      current.includes(brand) ? current.filter((item) => item !== brand) : [...current, brand]
-    );
-
-  const selectCategory = (category: ProductCategory | "All") => {
-    setSelectedCategory(category);
-    const next = new URLSearchParams(searchParams);
-    next.delete("collection");
-    if (category === "All") next.delete("category");
-    else next.set("category", category.toLowerCase().replace(/\s+/g, "-"));
-    setSearchParams(next);
-  };
-
-  const reset = () => {
-    setSelectedCategory(categoryFromLocation ?? "All");
-    setSelectedBrands([]);
-    setPriceFloor(499);
-    setPriceCeiling(100000);
-    setMinDiscount(0);
-    setInStockOnly(false);
-    setExpressOnly(false);
   };
 
   const catalogLabel =
@@ -170,12 +117,6 @@ export default function Catalog() {
     setCurrentPage(1);
   }, [
     selectedCategory,
-    selectedBrands,
-    priceFloor,
-    priceCeiling,
-    minDiscount,
-    inStockOnly,
-    expressOnly,
     query,
     sort,
     collection,
@@ -237,217 +178,7 @@ export default function Catalog() {
         />
       )}
 
-      <div className={`catalog-layout ${showFilters ? "catalog-layout--has-filters" : "catalog-layout--full"}`}>
-        {showFilters && (
-          <aside className="filter-rail" aria-label="Product filters">
-            <div className="filter-rail__head">
-              <div>
-                <SlidersHorizontal size={17} />
-                <h2>Filter the flow</h2>
-              </div>
-              <div className="filter-rail__head-actions">
-                <button className="reset-btn" onClick={reset}>
-                  Reset
-                </button>
-                <button className="close-filter-mobile" onClick={() => setShowFilters(false)}>
-                  <X size={18} />
-                </button>
-              </div>
-            </div>
-            <details open>
-              <summary>
-                Category <ChevronDown size={16} />
-              </summary>
-              <div className="filter-stack category-filter">
-                {["All", ...categoryOrder].map((category) => (
-                  <button
-                    key={category}
-                    className={selectedCategory === category ? "is-active" : ""}
-                    onClick={() => selectCategory(category as ProductCategory | "All")}
-                  >
-                    {category}
-                    <span>
-                      {category === "All"
-                        ? products.length
-                        : products.filter((product) => product.category === category).length}
-                    </span>
-                  </button>
-                ))}
-              </div>
-            </details>
-            <details open>
-              <summary>
-                Price range <ChevronDown size={16} />
-              </summary>
-              <div className="price-filter">
-                <div className="price-fields">
-                  <label>
-                    Min
-                    <input
-                      type="number"
-                      value={priceFloor}
-                      min="499"
-                      max={priceCeiling}
-                      onChange={(event) => setPriceFloor(Number(event.target.value))}
-                    />
-                  </label>
-                  <span>—</span>
-                  <label>
-                    Max
-                    <input
-                      type="number"
-                      value={priceCeiling}
-                      min={priceFloor}
-                      max="100000"
-                      onChange={(event) => setPriceCeiling(Number(event.target.value))}
-                    />
-                  </label>
-                </div>
-                <div className="range-pair">
-                  <input
-                    aria-label="Minimum price"
-                    type="range"
-                    min="499"
-                    max="100000"
-                    step="500"
-                    value={priceFloor}
-                    onChange={(event) => setPriceFloor(Math.min(Number(event.target.value), priceCeiling - 500))}
-                  />
-                  <input
-                    aria-label="Maximum price"
-                    type="range"
-                    min="499"
-                    max="100000"
-                    step="500"
-                    value={priceCeiling}
-                    onChange={(event) => setPriceCeiling(Math.max(Number(event.target.value), priceFloor + 500))}
-                  />
-                </div>
-                <p>
-                  {formatINR(priceFloor)} — {formatINR(priceCeiling)}
-                </p>
-              </div>
-            </details>
-            <details open>
-              <summary>
-                Discount <ChevronDown size={16} />
-              </summary>
-              <div className="filter-stack choice-filter">
-                {[10, 30, 50].map((discount) => (
-                  <button
-                    className={minDiscount === discount ? "is-active" : ""}
-                    key={discount}
-                    onClick={() => setMinDiscount(minDiscount === discount ? 0 : discount)}
-                  >
-                    {discount}% or more
-                  </button>
-                ))}
-              </div>
-            </details>
-            <details open>
-              <summary>
-                Availability <ChevronDown size={16} />
-              </summary>
-              <div className="toggle-stack">
-                <label>
-                  <input
-                    type="checkbox"
-                    checked={inStockOnly}
-                    onChange={(event) => setInStockOnly(event.target.checked)}
-                  />
-                  <span />
-                  In stock only
-                </label>
-                <label>
-                  <input
-                    type="checkbox"
-                    checked={expressOnly}
-                    onChange={(event) => setExpressOnly(event.target.checked)}
-                  />
-                  <span />
-                  Flash Express Delivery
-                </label>
-              </div>
-            </details>
-            <details>
-              <summary>
-                Brands <ChevronDown size={16} />
-              </summary>
-              <div className="brand-checks">
-                <div className="brand-search">
-                  <Search size={14} />
-                  <input placeholder="Search brands" />
-                </div>
-                {brands.map((brand) => (
-                  <label key={brand}>
-                    <input
-                      type="checkbox"
-                      checked={selectedBrands.includes(brand)}
-                      onChange={() => toggleBrand(brand)}
-                    />
-                    <span>{brand}</span>
-                  </label>
-                ))}
-              </div>
-            </details>
-
-            <div className="filter-group">
-              <label>Price Range</label>
-              <div className="price-inputs">
-                <span>{formatINR(priceFloor)}</span>
-                <span>to</span>
-                <span>{formatINR(priceCeiling)}</span>
-              </div>
-              <input
-                type="range"
-                min={499}
-                max={100000}
-                step={500}
-                value={priceCeiling}
-                onChange={(e) => setPriceCeiling(Number(e.target.value))}
-              />
-            </div>
-
-            <div className="filter-group">
-              <label>Minimum Discount</label>
-              <select value={minDiscount} onChange={(e) => setMinDiscount(Number(e.target.value))}>
-                <option value={0}>All Discounts</option>
-                <option value={10}>10% or more</option>
-                <option value={20}>20% or more</option>
-                <option value={30}>30% or more</option>
-                <option value={40}>40% or more</option>
-                <option value={50}>50% or more</option>
-              </select>
-            </div>
-
-            <div className="filter-group">
-              <label>Availability & Delivery</label>
-              <label className="toggle-label">
-                <input
-                  type="checkbox"
-                  checked={inStockOnly}
-                  onChange={(e) => setInStockOnly(e.target.checked)}
-                />
-                <span>In-Stock Only</span>
-              </label>
-              <label className="toggle-label">
-                <input
-                  type="checkbox"
-                  checked={expressOnly}
-                  onChange={(e) => setExpressOnly(e.target.checked)}
-                />
-                <span>Flash Express Shipping</span>
-              </label>
-            </div>
-
-            <div className="filter-rail__footer-mobile">
-              <button className="lime-button" onClick={() => setShowFilters(false)}>
-                Apply Filters
-              </button>
-            </div>
-          </aside>
-        )}
-
+      <div className="catalog-layout catalog-layout--full">
         <div className="catalog-results">
           <div className="catalog-controls">
             <p>
@@ -455,20 +186,6 @@ export default function Catalog() {
               {catalogLabel !== "The Flash edit" && <> in <b>{catalogLabel}</b></>}
             </p>
             <div className="catalog-controls__actions">
-              <button
-                className={`filter-toggle-btn ${showFilters ? "is-active" : ""}`}
-                onClick={() => setShowFilters((prev) => !prev)}
-                aria-label="Toggle filters"
-              >
-                <SlidersHorizontal size={15} />
-                <span>Filters</span>
-                {activeFilterCount > 0 && <span className="filter-count-badge">{activeFilterCount}</span>}
-              </button>
-              {activeFilterCount > 0 && (
-                <button className="clear-filters-btn" onClick={reset}>
-                  Clear All
-                </button>
-              )}
               <div className="view-switch">
                 <button
                   className={view === "grid" ? "is-active" : ""}
@@ -501,7 +218,7 @@ export default function Catalog() {
           {results.length ? (
             <div
               className={`catalog-grid catalog-grid--${view} ${
-                !showFilters && view === "grid" ? "catalog-grid--4col" : ""
+                view === "grid" ? "catalog-grid--4col" : ""
               }`}
             >
               {paginatedProducts.map((product) => (
@@ -512,10 +229,7 @@ export default function Catalog() {
             <div className="empty-catalog">
               <Sparkles size={25} />
               <h2>Nothing in this lane yet.</h2>
-              <p>Shift your filters and the next find will surface.</p>
-              <button className="lime-button" onClick={reset}>
-                Reset filters
-              </button>
+              <p>Try searching for something else or explore other categories.</p>
             </div>
           )}
 
@@ -573,3 +287,4 @@ export default function Catalog() {
     </section>
   );
 }
+
