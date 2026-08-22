@@ -224,5 +224,21 @@ button:active:not(:disabled), .lime-button:active, .black-button:active, .catego
   box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.5), 0 8px 10px -6px rgba(0, 0, 0, 0.5) !important;
 }
 
+/* Thin custom filter scrollbar */
+.custom-filter-scrollbar::-webkit-scrollbar {
+  width: 5px;
+}
+.custom-filter-scrollbar::-webkit-scrollbar-track {
+  background: #f1f1f1;
+}
+.custom-filter-scrollbar::-webkit-scrollbar-thumb {
+  background: #c1c1c1;
+  border-radius: 4px;
+}
+.custom-filter-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: #ccff00;
+}
+
+
 
 

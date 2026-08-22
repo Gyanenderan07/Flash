@@ -59,6 +59,18 @@ export default function Catalog() {
     loadLiveProducts();
   }, []);
 
+  // Lock body scroll when filter drawer is open
+  useEffect(() => {
+    if (isDrawerOpen) {
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "";
+    }
+    return () => {
+      document.body.style.overflow = "";
+    };
+  }, [isDrawerOpen]);
+
   // Compute dataset bounds
   const priceBounds = useMemo(() => calculatePriceBounds(allProducts), [allProducts]);
 
@@ -297,19 +309,22 @@ export default function Catalog() {
                 type="button"
                 onClick={() => setIsDrawerOpen((prev) => !prev)}
                 aria-label="Toggle filter panel"
-                className={`inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-black transition-all border cursor-pointer ${
-                  isDrawerOpen || activeFilterCount > 0
-                    ? "bg-[#0F1115] text-white border-[#CCFF00] shadow-md ring-2 ring-[#CCFF00]/30"
-                    : "bg-white dark:bg-[#12151B] text-[#0F1115] dark:text-white border-[#CCFF00] hover:bg-[#CCFF00]/15 hover:border-[#b8e600] shadow-xs"
+                className={`inline-flex items-center gap-2.5 px-4 py-2.5 rounded-xl text-xs font-black tracking-wider uppercase transition-all duration-200 cursor-pointer border ${
+                  isDrawerOpen
+                    ? "bg-[#000000] text-[#CCFF00] border-[#CCFF00] shadow-[0_0_15px_rgba(204,255,0,0.4)] ring-2 ring-[#CCFF00]/40 scale-[1.02]"
+                    : activeFilterCount > 0
+                    ? "bg-[#000000] text-[#CCFF00] border-[#CCFF00] shadow-[0_0_12px_rgba(204,255,0,0.3)] hover:scale-[1.02]"
+                    : "bg-[#000000] text-[#CCFF00] border-[#000000] hover:border-[#CCFF00] hover:shadow-[0_0_14px_rgba(204,255,0,0.3)] hover:scale-[1.02]"
                 }`}
               >
                 <SlidersHorizontal
                   size={15}
-                  className={isDrawerOpen || activeFilterCount > 0 ? "text-[#CCFF00]" : "text-[#0F1115] dark:text-[#CCFF00]"}
+                  className="text-[#CCFF00]"
+                  strokeWidth={2.5}
                 />
-                <span>Filters</span>
+                <span>FILTERS</span>
                 {activeFilterCount > 0 && (
-                  <span className="inline-grid place-items-center w-5 h-5 rounded-full bg-[#CCFF00] text-[#0F1115] text-[11px] font-black ml-0.5">
+                  <span className="inline-grid place-items-center w-5 h-5 rounded-full bg-[#CCFF00] text-[#000000] text-[11px] font-black ml-0.5 shadow-2xs">
                     {activeFilterCount}
                   </span>
                 )}
