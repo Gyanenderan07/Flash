@@ -98,7 +98,7 @@ export default function ProductCard({
       </button>
 
       <Link
-        className="commerce-product-card__media relative w-full aspect-square bg-[#F4F4F5] dark:bg-[#15181E] rounded-2xl overflow-hidden group block"
+        className="commerce-product-card__media relative w-full aspect-square bg-[#F5F5F7] dark:bg-[#14171E] rounded-2xl p-3 flex items-center justify-center overflow-hidden group block"
         to={`/product/${product.id}`}
       >
         <AnimatePresence mode="wait">
@@ -115,7 +115,7 @@ export default function ProductCard({
               transition={{ duration: 0.3, ease: "easeOut" }}
               className="w-full h-full flex items-center justify-center"
             >
-              <SafeImage src={currentImageUrl} alt={product.name} className="w-full h-full object-cover object-center" />
+              <SafeImage src={currentImageUrl} alt={product.name} className="w-full h-full object-contain object-center transition-transform duration-500 group-hover:scale-105" />
             </motion.div>
           </motion.div>
         </AnimatePresence>

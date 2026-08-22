@@ -62,12 +62,12 @@ export default function CategoryHero({
         </div>
 
         {/* Right Hero Product Image (Compact & Proportional) */}
-        <div className="relative h-full w-[40%] sm:w-[45%] md:w-[48%] flex-shrink-0 flex items-center justify-center overflow-hidden">
+        <div className="relative h-full w-[40%] sm:w-[45%] md:w-[48%] flex-shrink-0 flex items-center justify-center p-3 overflow-hidden">
           {/* Background Image / Hero Image */}
           <SafeImage
             src={displayImage}
             alt={featuredProduct?.name ?? "Category Hero"}
-            className="w-full h-full object-cover object-center"
+            className="max-w-full max-h-full object-contain object-center transition-transform duration-300 hover:scale-105"
           />
 
           {/* Floating Micro Product Tag */}
