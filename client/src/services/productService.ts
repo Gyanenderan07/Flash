@@ -24,9 +24,33 @@ export interface StoreProduct {
   isExpress: boolean;
 }
 
+export const autoSeedCatalogIfEmpty = async () => {
+  try {
+    const { count } = await supabase.from('products').select('*', { count: 'exact', head: true });
+    if (count === 0 || (count !== null && count < 5)) {
+      const payload = defaultProducts.map((p: any) => ({
+        name: p.name,
+        brand: p.brand || 'Flash',
+        category: (p.category || 'electronics').toLowerCase().trim().replace(/[\s&]+/g, '-'),
+        price: Number(p.price),
+        original_price: Number(p.originalPrice || p.mrp || p.price),
+        discount: p.discount || '-0%',
+        stock: p.stock || 15,
+        description: p.description || 'Verified authentic Flash product.',
+        primary_image: p.primaryImage || p.image,
+        hover_images: [p.hoverImage || (p.gallery && p.gallery[1]) || p.primaryImage || p.image],
+        colors: p.colors || [{ name: 'Default', hex: '#0F1115' }]
+      }));
+      await supabase.from('products').insert(payload);
+    }
+  } catch (err) {
+    console.warn('Auto-seed catalog notice:', err);
+  }
+};
+
 export const fetchAllLiveProducts = async (): Promise<StoreProduct[]> => {
   try {
-    const { data, error } = await supabase
+    let { data, error } = await supabase
       .from("products")
       .select("*")
       .order("created_at", { ascending: false });
@@ -36,7 +60,12 @@ export const fetchAllLiveProducts = async (): Promise<StoreProduct[]> => {
       return [];
     }
 
-    if (!data || data.length === 0) return [];
+    if (!data || data.length === 0) {
+      await autoSeedCatalogIfEmpty();
+      const { data: reseeded } = await supabase.from('products').select('*').order('created_at', { ascending: false });
+      if (!reseeded || reseeded.length === 0) return [];
+      data = reseeded;
+    }
 
     return data.map((p) => {
       const rawCategory = (p.category || "electronics").toLowerCase().trim();
