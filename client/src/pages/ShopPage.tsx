@@ -3,8 +3,19 @@ import { useSearchParams } from 'react-router-dom';
 import ProductCard from '../components/ProductCard';
 import CategoryHero from '../components/CategoryHero';
 import Pagination from '../components/Pagination';
+import FilterDrawer from '../components/FilterDrawer';
+import ActiveFilterChips from '../components/ActiveFilterChips';
 import { getLiveStoreProducts } from '../services/productService';
 import { products, type Product } from '../data/mockProducts';
+import {
+  calculatePriceBounds,
+  defaultCriteria,
+  filterCatalog,
+  countActiveFilters,
+  getActiveChips,
+  type FilterCriteria,
+  type ActiveChip,
+} from '../lib/filterService';
 
 export default function ShopPage() {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -16,6 +27,7 @@ export default function ShopPage() {
   const [allProducts, setAllProducts] = useState<Product[]>(products);
   const [loading, setLoading] = useState<boolean>(true);
   const [currentPage, setCurrentPage] = useState<number>(1);
+  const [isFilterDrawerOpen, setIsFilterDrawerOpen] = useState(false);
   const itemsPerPage = 12;
 
   useEffect(() => {
@@ -33,38 +45,70 @@ export default function ShopPage() {
     loadProducts();
   }, []);
 
-  // Category Filtering Logic
-  const filteredProducts = useMemo(() => {
-    const targetCategory = categoryParam.toLowerCase().trim().replace(/[\s&]+/g, '-');
-    if (targetCategory === 'all' || !targetCategory) {
-      return allProducts;
-    }
-    return allProducts.filter((p) => {
-      const cat = (p.category || 'electronics').toLowerCase().trim().replace(/[\s&]+/g, '-');
-      return cat === targetCategory;
-    });
-  }, [allProducts, categoryParam]);
+  const priceBounds = useMemo(() => calculatePriceBounds(allProducts), [allProducts]);
+  const [filters, setFilters] = useState<FilterCriteria>(() => ({
+    ...defaultCriteria,
+    priceRange: [priceBounds.minPrice, priceBounds.maxPrice],
+  }));
 
-  // Sorting Logic
-  const sortedProducts = useMemo(() => {
-    const list = [...filteredProducts];
-    if (sortParam === 'price-low') {
-      return list.sort((a, b) => (Number(a.price) || 0) - (Number(b.price) || 0));
+  useEffect(() => {
+    setFilters((prev) => ({
+      ...prev,
+      priceRange: [
+        Math.max(prev.priceRange[0], priceBounds.minPrice),
+        Math.min(prev.priceRange[1], priceBounds.maxPrice),
+      ],
+    }));
+  }, [priceBounds]);
+
+  const activeFilterCount = countActiveFilters(filters, priceBounds);
+  const activeChips = getActiveChips(filters, priceBounds);
+
+  const handleResetFilters = () => {
+    setFilters({
+      ...defaultCriteria,
+      priceRange: [priceBounds.minPrice, priceBounds.maxPrice],
+    });
+  };
+
+  const handleRemoveChip = (chip: ActiveChip) => {
+    const next = { ...filters };
+    if (chip.type === 'categories' && chip.value) {
+      next.categories = next.categories.filter((c) => c !== chip.value);
+    } else if (chip.type === 'priceRange') {
+      next.priceRange = [priceBounds.minPrice, priceBounds.maxPrice];
+    } else if (chip.type === 'brands' && chip.value) {
+      next.brands = next.brands.filter((b) => b !== chip.value);
+    } else if (chip.type === 'minRating') {
+      next.minRating = 0;
+    } else if (chip.type === 'minDiscount') {
+      next.minDiscount = 0;
+    } else if (chip.type === 'inStockOnly') {
+      next.inStockOnly = false;
+    } else if (chip.type === 'expressDeliveryOnly') {
+      next.expressDeliveryOnly = false;
     }
-    if (sortParam === 'price-high') {
-      return list.sort((a, b) => (Number(b.price) || 0) - (Number(a.price) || 0));
+    setFilters(next);
+  };
+
+  // Category & Engine Filtering Logic
+  const filteredProducts = useMemo(() => {
+    const effectiveFilters = { ...filters };
+    const targetCategory = categoryParam.toLowerCase().trim().replace(/[\s&]+/g, '-');
+    if (targetCategory !== 'all' && targetCategory && effectiveFilters.categories.length === 0) {
+      effectiveFilters.categories = [categoryParam];
     }
-    return list;
-  }, [filteredProducts, sortParam]);
+    return filterCatalog(allProducts, effectiveFilters, '', sortParam);
+  }, [allProducts, filters, categoryParam, sortParam]);
 
   // Multi-page Pagination Engine
-  const totalPages = Math.ceil(sortedProducts.length / itemsPerPage);
+  const totalPages = Math.ceil(filteredProducts.length / itemsPerPage);
   const paginatedProducts = useMemo(() => {
     const start = (currentPage - 1) * itemsPerPage;
-    return sortedProducts.slice(start, start + itemsPerPage);
-  }, [sortedProducts, currentPage, itemsPerPage]);
+    return filteredProducts.slice(start, start + itemsPerPage);
+  }, [filteredProducts, currentPage, itemsPerPage]);
 
-  const leadProduct = sortedProducts[0] || allProducts[0];
+  const leadProduct = filteredProducts[0] || allProducts[0];
 
   const handleSortChange = (newSort: string) => {
     const params = new URLSearchParams(searchParams);
@@ -78,7 +122,7 @@ export default function ShopPage() {
         {/* Category Hero Banner */}
         <CategoryHero
           categoryTitle={categoryParam !== 'all' ? categoryParam.replace(/-/g, ' ') : 'All Catalog'}
-          itemCount={sortedProducts.length}
+          itemCount={filteredProducts.length}
           featuredProduct={leadProduct}
         />
 
@@ -89,11 +133,46 @@ export default function ShopPage() {
               Category: {categoryParam.replace(/-/g, ' ')}
             </h1>
             <p className="text-xs text-neutral-500 font-medium">
-              Showing {sortedProducts.length} Flash verified products
+              Showing {filteredProducts.length} Flash verified products
             </p>
           </div>
 
           <div className="flex items-center gap-3">
+            {/* Signature Filter Button */}
+            <button
+              type="button"
+              onClick={() => setIsFilterDrawerOpen(true)}
+              className={`relative group inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-[#000000] text-[#CCFF00] font-black text-xs tracking-widest uppercase border transition-all duration-200 shadow-md cursor-pointer ${
+                isFilterDrawerOpen || activeFilterCount > 0
+                  ? 'border-[#CCFF00] shadow-[0_0_16px_rgba(204,255,0,0.3)]'
+                  : 'border-neutral-900 hover:border-[#CCFF00]/80 hover:shadow-[0_0_14px_rgba(204,255,0,0.22)] hover:-translate-y-0.5'
+              } active:scale-95`}
+            >
+              {/* Flash Signature Neon Icon */}
+              <svg 
+                className="w-4 h-4 text-[#CCFF00] transition-transform duration-200 group-hover:scale-110" 
+                viewBox="0 0 24 24" 
+                fill="none" 
+                stroke="currentColor" 
+                strokeWidth="2.5" 
+                strokeLinecap="round" 
+                strokeLinejoin="round"
+              >
+                <line x1="4" y1="6" x2="20" y2="6"></line>
+                <line x1="7" y1="12" x2="17" y2="12"></line>
+                <line x1="10" y1="18" x2="14" y2="18"></line>
+              </svg>
+
+              <span className="font-extrabold tracking-wider">FILTERS</span>
+
+              {/* Active Count Badge */}
+              {activeFilterCount > 0 && (
+                <span className="flex items-center justify-center min-w-[20px] h-5 px-1.5 text-[10px] font-black bg-[#CCFF00] text-[#000000] rounded-full shadow-sm">
+                  {activeFilterCount}
+                </span>
+              )}
+            </button>
+
             <label className="text-xs font-bold text-neutral-500 uppercase tracking-wider">
               Sort By:
             </label>
@@ -105,9 +184,18 @@ export default function ShopPage() {
               <option value="featured">Featured / Newest</option>
               <option value="price-low">Price: Low to High</option>
               <option value="price-high">Price: High to Low</option>
+              <option value="discount-high">Discount: High to Low</option>
+              <option value="rating-high">Rating: Highest Rated</option>
             </select>
           </div>
         </div>
+
+        {/* Active Filter Chips */}
+        <ActiveFilterChips
+          chips={activeChips}
+          onRemoveChip={handleRemoveChip}
+          onClearAll={handleResetFilters}
+        />
 
         {/* Full Width Product Grid */}
         <div className="w-full space-y-6">
@@ -139,11 +227,29 @@ export default function ShopPage() {
             <div className="text-center py-16 bg-white dark:bg-[#12151B] rounded-3xl border border-neutral-200 dark:border-neutral-800 space-y-3">
               <h3 className="text-lg font-bold text-neutral-900 dark:text-white">No products found</h3>
               <p className="text-xs text-neutral-500">
-                No products are currently available in this category.
+                Try adjusting your filter options or select a different category.
               </p>
+              <button
+                type="button"
+                onClick={handleResetFilters}
+                className="mt-2 px-4 py-2 bg-[#CCFF00] text-[#000000] text-xs font-bold rounded-xl hover:bg-[#b8e600] transition-colors cursor-pointer border-none"
+              >
+                Clear Filters
+              </button>
             </div>
           )}
         </div>
+
+        {/* Filter Drawer */}
+        <FilterDrawer
+          isOpen={isFilterDrawerOpen}
+          onClose={() => setIsFilterDrawerOpen(false)}
+          filters={filters}
+          bounds={priceBounds}
+          allProducts={allProducts}
+          onApplyFilters={setFilters}
+          onResetFilters={handleResetFilters}
+        />
       </div>
     </div>
   );

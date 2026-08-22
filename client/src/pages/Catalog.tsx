@@ -1,6 +1,6 @@
 /**
  * Flash catalog — preserve Supercharged Editorial Commerce with paper-white density,
- * heavy Space Grotesk hierarchy, and dynamic 4-column expansion.
+ * heavy Space Grotesk hierarchy, dynamic 4-column expansion, and modern filter system.
  */
 import { useEffect, useMemo, useState } from "react";
 import { Grid2X2, List, Search, Sparkles, X } from "lucide-react";
@@ -9,9 +9,20 @@ import ProductCard from "@/components/ProductCard";
 import CategoryHero from "@/components/CategoryHero";
 import Pagination from "@/components/Pagination";
 import SafeImage from "@/components/common/SafeImage";
+import FilterDrawer from "@/components/FilterDrawer";
+import ActiveFilterChips from "@/components/ActiveFilterChips";
 import { categoryOrder, formatINR, getDiscount, products, type Product, type ProductCategory } from "@/data/mockProducts";
 import { useCommerce } from "@/contexts/CommerceContext";
 import { getLiveStoreProducts } from "@/services/productService";
+import {
+  calculatePriceBounds,
+  defaultCriteria,
+  filterCatalog,
+  countActiveFilters,
+  getActiveChips,
+  type FilterCriteria,
+  type ActiveChip,
+} from "@/lib/filterService";
 
 function slugToCategory(slug?: string) {
   if (!slug) return null;
@@ -35,14 +46,10 @@ export default function Catalog() {
   const categoryFromLocation = categoryFromRoute ?? categoryFromQuery;
   const collection = searchParams.get("collection") ?? "";
 
-  const [selectedCategory, setSelectedCategory] = useState<ProductCategory | "All">(categoryFromLocation ?? "All");
   const [view, setView] = useState<"grid" | "list">("grid");
   const [quickView, setQuickView] = useState<Product | null>(null);
   const [allProducts, setAllProducts] = useState<Product[]>(products);
-
-  useEffect(() => {
-    setSelectedCategory(categoryFromLocation ?? "All");
-  }, [categoryFromLocation]);
+  const [isDrawerOpen, setIsDrawerOpen] = useState(false);
 
   useEffect(() => {
     async function loadLiveProducts() {
@@ -52,44 +59,75 @@ export default function Catalog() {
     loadLiveProducts();
   }, []);
 
+  const priceBounds = useMemo(() => calculatePriceBounds(allProducts), [allProducts]);
+  const [filters, setFilters] = useState<FilterCriteria>(() => ({
+    ...defaultCriteria,
+    categories: categoryFromLocation ? [categoryFromLocation] : [],
+    priceRange: [priceBounds.minPrice, priceBounds.maxPrice],
+  }));
+
+  useEffect(() => {
+    if (categoryFromLocation) {
+      setFilters((prev) => ({
+        ...prev,
+        categories: [categoryFromLocation],
+      }));
+    }
+  }, [categoryFromLocation]);
+
+  useEffect(() => {
+    setFilters((prev) => ({
+      ...prev,
+      priceRange: [
+        Math.max(prev.priceRange[0], priceBounds.minPrice),
+        Math.min(prev.priceRange[1], priceBounds.maxPrice),
+      ],
+    }));
+  }, [priceBounds]);
+
+  const activeFilterCount = countActiveFilters(filters, priceBounds);
+  const activeChips = getActiveChips(filters, priceBounds);
+
+  const handleResetFilters = () => {
+    setFilters({
+      ...defaultCriteria,
+      categories: categoryFromLocation ? [categoryFromLocation] : [],
+      priceRange: [priceBounds.minPrice, priceBounds.maxPrice],
+    });
+  };
+
+  const handleRemoveChip = (chip: ActiveChip) => {
+    const next = { ...filters };
+    if (chip.type === "categories" && chip.value) {
+      next.categories = next.categories.filter((c) => c !== chip.value);
+    } else if (chip.type === "priceRange") {
+      next.priceRange = [priceBounds.minPrice, priceBounds.maxPrice];
+    } else if (chip.type === "brands" && chip.value) {
+      next.brands = next.brands.filter((b) => b !== chip.value);
+    } else if (chip.type === "minRating") {
+      next.minRating = 0;
+    } else if (chip.type === "minDiscount") {
+      next.minDiscount = 0;
+    } else if (chip.type === "inStockOnly") {
+      next.inStockOnly = false;
+    } else if (chip.type === "expressDeliveryOnly") {
+      next.expressDeliveryOnly = false;
+    }
+    setFilters(next);
+  };
+
   const query = (searchParams.get("search") ?? searchQuery).trim().toLowerCase();
   const sort = searchParams.get("sort") ?? "featured";
 
-  // Product pipeline: Search Query + Category + Collection + Sort
-  const results = useMemo(
-    () =>
-      allProducts
-        .filter((product) => {
-          const matchesQuery =
-            !query ||
-            `${product.name} ${product.brand} ${product.category} ${product.subcategory}`
-              .toLowerCase()
-              .includes(query);
-          const matchesCollection =
-            collection === "new-in"
-              ? Boolean(product.isNew)
-              : collection === "top-deals"
-              ? getDiscount(product) >= 40
-              : true;
-          return (
-            matchesQuery &&
-            matchesCollection &&
-            (selectedCategory === "All" || product.category === selectedCategory)
-          );
-        })
-        .sort((a, b) =>
-          sort === "low"
-            ? a.price - b.price
-            : sort === "high"
-            ? b.price - a.price
-            : collection === "new-in" || sort === "newest"
-            ? Number(Boolean(b.isNew)) - Number(Boolean(a.isNew)) || b.id.localeCompare(a.id)
-            : collection === "top-deals" || sort === "discount"
-            ? getDiscount(b) - getDiscount(a)
-            : 0
-        ),
-    [allProducts, query, selectedCategory, sort, collection]
-  );
+  // Product pipeline: Search Query + Filters + Collection + Sort
+  const results = useMemo(() => {
+    const engineFiltered = filterCatalog(allProducts, filters, query, sort);
+    return engineFiltered.filter((product: any) => {
+      if (collection === "new-in") return Boolean(product.isNew);
+      if (collection === "top-deals") return getDiscount(product) >= 40;
+      return true;
+    });
+  }, [allProducts, filters, query, collection, sort]);
 
   const setSort = (value: string) => {
     const next = new URLSearchParams(searchParams);
@@ -110,7 +148,7 @@ export default function Catalog() {
 
   useEffect(() => {
     setCurrentPage(1);
-  }, [selectedCategory, query, sort, collection]);
+  }, [filters, query, sort, collection]);
 
   const totalPages = Math.ceil(results.length / ITEMS_PER_PAGE);
   const paginatedProducts = useMemo(
@@ -178,6 +216,42 @@ export default function Catalog() {
             </p>
 
             <div className="catalog-controls__actions">
+              {/* Signature Filter Button */}
+              <button
+                type="button"
+                onClick={() => setIsDrawerOpen(true)}
+                aria-label="Toggle filter panel"
+                className={`relative group inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-[#000000] text-[#CCFF00] font-black text-xs tracking-widest uppercase border transition-all duration-200 shadow-md cursor-pointer ${
+                  isDrawerOpen || activeFilterCount > 0
+                    ? "border-[#CCFF00] shadow-[0_0_16px_rgba(204,255,0,0.3)]"
+                    : "border-neutral-900 hover:border-[#CCFF00]/80 hover:shadow-[0_0_14px_rgba(204,255,0,0.22)] hover:-translate-y-0.5"
+                } active:scale-95`}
+              >
+                {/* Flash Signature Neon Icon */}
+                <svg
+                  className="w-4 h-4 text-[#CCFF00] transition-transform duration-200 group-hover:scale-110"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2.5"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
+                  <line x1="4" y1="6" x2="20" y2="6"></line>
+                  <line x1="7" y1="12" x2="17" y2="12"></line>
+                  <line x1="10" y1="18" x2="14" y2="18"></line>
+                </svg>
+
+                <span className="font-extrabold tracking-wider">FILTERS</span>
+
+                {/* Active Count Badge */}
+                {activeFilterCount > 0 && (
+                  <span className="flex items-center justify-center min-w-[20px] h-5 px-1.5 text-[10px] font-black bg-[#CCFF00] text-[#000000] rounded-full shadow-sm">
+                    {activeFilterCount}
+                  </span>
+                )}
+              </button>
+
               {/* VIEW SWITCH */}
               <div className="view-switch">
                 <button
@@ -210,6 +284,13 @@ export default function Catalog() {
             </div>
           </div>
 
+          {/* ACTIVE FILTER CHIPS */}
+          <ActiveFilterChips
+            chips={activeChips}
+            onRemoveChip={handleRemoveChip}
+            onClearAll={handleResetFilters}
+          />
+
           {/* PRODUCT GRID / EMPTY STATE */}
           {results.length ? (
             <div
@@ -222,10 +303,21 @@ export default function Catalog() {
               ))}
             </div>
           ) : (
-            <div className="empty-catalog">
-              <Sparkles size={25} />
-              <h2>Nothing in this lane yet.</h2>
-              <p>Try searching for something else or explore other categories.</p>
+            <div className="bg-white dark:bg-[#12151B] border border-neutral-200/80 dark:border-neutral-800 rounded-3xl p-12 text-center space-y-4 shadow-sm my-6">
+              <Sparkles size={32} className="mx-auto text-[#CCFF00]" />
+              <h3 className="text-xl font-black text-neutral-900 dark:text-white tracking-tight">
+                No products found
+              </h3>
+              <p className="text-xs font-medium text-neutral-500 max-w-sm mx-auto">
+                No products match your selected filter criteria. Try adjusting or clearing your filters.
+              </p>
+              <button
+                type="button"
+                onClick={handleResetFilters}
+                className="inline-flex items-center gap-2 px-5 py-2.5 rounded-2xl bg-[#CCFF00] text-[#0F1115] text-xs font-black hover:bg-[#b8e600] transition-colors cursor-pointer border-none shadow-sm"
+              >
+                Clear Filters
+              </button>
             </div>
           )}
 
@@ -236,6 +328,17 @@ export default function Catalog() {
           />
         </div>
       </div>
+
+      {/* FILTER DRAWER */}
+      <FilterDrawer
+        isOpen={isDrawerOpen}
+        onClose={() => setIsDrawerOpen(false)}
+        filters={filters}
+        bounds={priceBounds}
+        allProducts={allProducts}
+        onApplyFilters={setFilters}
+        onResetFilters={handleResetFilters}
+      />
 
       {/* QUICK VIEW MODAL */}
       {quickView && (
