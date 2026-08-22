@@ -295,21 +295,21 @@ export default function Catalog() {
               {/* FILTERS BUTTON */}
               <button
                 type="button"
-                onClick={() => setIsDrawerOpen(true)}
-                aria-label="Open filter panel"
-                className={`inline-flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-black transition-all border cursor-pointer ${
-                  activeFilterCount > 0
-                    ? "bg-[#0F1115] text-[#CCFF00] border-[#CCFF00] shadow-sm"
-                    : "bg-white dark:bg-[#12151B] text-neutral-900 dark:text-white border-neutral-200 dark:border-neutral-800 hover:border-neutral-400"
+                onClick={() => setIsDrawerOpen((prev) => !prev)}
+                aria-label="Toggle filter panel"
+                className={`inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-black transition-all border cursor-pointer ${
+                  isDrawerOpen || activeFilterCount > 0
+                    ? "bg-[#0F1115] text-white border-[#CCFF00] shadow-md ring-2 ring-[#CCFF00]/30"
+                    : "bg-white dark:bg-[#12151B] text-[#0F1115] dark:text-white border-[#CCFF00] hover:bg-[#CCFF00]/15 hover:border-[#b8e600] shadow-xs"
                 }`}
               >
                 <SlidersHorizontal
                   size={15}
-                  className={activeFilterCount > 0 ? "text-[#CCFF00]" : "text-neutral-600 dark:text-neutral-300"}
+                  className={isDrawerOpen || activeFilterCount > 0 ? "text-[#CCFF00]" : "text-[#0F1115] dark:text-[#CCFF00]"}
                 />
                 <span>Filters</span>
                 {activeFilterCount > 0 && (
-                  <span className="inline-grid place-items-center w-5 h-5 rounded-full bg-[#CCFF00] text-[#0F1115] text-[10px] font-black">
+                  <span className="inline-grid place-items-center w-5 h-5 rounded-full bg-[#CCFF00] text-[#0F1115] text-[11px] font-black ml-0.5">
                     {activeFilterCount}
                   </span>
                 )}

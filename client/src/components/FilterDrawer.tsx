@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { SlidersHorizontal, RotateCcw, X, Check } from "lucide-react";
-import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetClose } from "@/components/ui/sheet";
 import { Slider } from "@/components/ui/slider";
 import { Checkbox } from "@/components/ui/checkbox";
 import { categoryOrder, type Product, type ProductCategory } from "@/data/mockProducts";
@@ -60,6 +60,10 @@ export default function FilterDrawer({
     });
   };
 
+  const handleSelectAllCategories = () => {
+    setDraft((prev) => ({ ...prev, categories: [] }));
+  };
+
   // Price range slider change
   const handlePriceSliderChange = (values: number[]) => {
     if (values.length >= 2) {
@@ -88,41 +92,51 @@ export default function FilterDrawer({
     onClose();
   };
 
-  const handleReset = () => {
-    onResetFilters();
-    onClose();
+  const handleClearAll = () => {
+    setDraft({
+      categories: [],
+      minPrice: bounds.minPrice,
+      maxPrice: bounds.maxPrice,
+      minDiscount: 0,
+      inStockOnly: false,
+      expressOnly: false,
+    });
   };
 
   return (
     <Sheet open={isOpen} onOpenChange={(open) => !open && onClose()}>
       <SheetContent
-        side="right"
-        className="w-full sm:max-w-md bg-white dark:bg-[#12151B] text-black dark:text-white p-0 flex flex-col h-full border-l border-neutral-200 dark:border-neutral-800 shadow-2xl z-50"
+        side="left"
+        className="w-full sm:max-w-md bg-white dark:bg-[#12151B] text-black dark:text-white p-0 flex flex-col h-full border-r border-neutral-200 dark:border-neutral-800 shadow-2xl z-50 font-['Space_Grotesk',sans-serif]"
       >
         {/* DRAWER HEADER */}
         <SheetHeader className="p-5 border-b border-neutral-200/80 dark:border-neutral-800 flex flex-row items-center justify-between space-y-0">
-          <div className="flex items-center gap-2">
-            <SlidersHorizontal className="size-5 text-[#0F1115] dark:text-[#CCFF00]" />
-            <SheetTitle className="text-lg font-black tracking-tight text-neutral-900 dark:text-white">
-              Filter Products
-            </SheetTitle>
-            {activeCount > 0 && (
-              <span className="ml-1 px-2 py-0.5 rounded-full text-xs font-black bg-[#CCFF00] text-[#0F1115]">
-                {activeCount} active
+          <div className="flex flex-col gap-0.5">
+            <div className="flex items-center gap-2">
+              <SlidersHorizontal className="size-5 text-[#0F1115] dark:text-[#CCFF00]" />
+              <SheetTitle className="text-lg font-black tracking-tight text-neutral-900 dark:text-white uppercase">
+                FILTERS
+              </SheetTitle>
+            </div>
+            {activeCount > 0 ? (
+              <span className="text-xs font-semibold text-neutral-500">
+                {activeCount} {activeCount === 1 ? "filter" : "filters"} applied
+              </span>
+            ) : (
+              <span className="text-xs font-semibold text-neutral-400">
+                No filters applied
               </span>
             )}
           </div>
 
           <div className="flex items-center gap-3">
-            {activeCount > 0 && (
-              <button
-                type="button"
-                onClick={handleReset}
-                className="text-xs font-bold text-neutral-500 hover:text-red-600 dark:hover:text-red-400 flex items-center gap-1 transition-colors cursor-pointer border-none bg-transparent"
-              >
-                <RotateCcw size={12} /> Reset
-              </button>
-            )}
+            <button
+              type="button"
+              onClick={handleClearAll}
+              className="text-xs font-bold text-[#0F1115] dark:text-white hover:text-[#788e00] dark:hover:text-[#CCFF00] flex items-center gap-1 transition-colors cursor-pointer border-none bg-transparent"
+            >
+              <RotateCcw size={12} /> Clear All
+            </button>
           </div>
         </SheetHeader>
 
@@ -131,9 +145,34 @@ export default function FilterDrawer({
           {/* 1. CATEGORY FILTER */}
           <div className="space-y-3 pt-0">
             <h4 className="text-xs font-black uppercase tracking-wider text-neutral-900 dark:text-white">
-              Category
+              CATEGORY
             </h4>
             <div className="space-y-2 max-h-56 overflow-y-auto pr-1">
+              {/* All Option */}
+              <label
+                className="flex items-center justify-between p-2 rounded-xl hover:bg-neutral-100/70 dark:hover:bg-neutral-800/50 cursor-pointer transition-colors group"
+                onClick={handleSelectAllCategories}
+              >
+                <div className="flex items-center gap-3">
+                  <div
+                    className={`w-4 h-4 rounded-[4px] border flex items-center justify-center transition-colors ${
+                      draft.categories.length === 0
+                        ? "bg-[#CCFF00] border-[#CCFF00] text-[#0F1115]"
+                        : "border-neutral-300 dark:border-neutral-700 bg-white dark:bg-transparent"
+                    }`}
+                  >
+                    {draft.categories.length === 0 && <Check size={12} strokeWidth={3} />}
+                  </div>
+                  <span className="text-xs font-bold text-neutral-800 dark:text-neutral-200">
+                    All Categories
+                  </span>
+                </div>
+                <span className="text-[10px] font-semibold text-neutral-400 bg-neutral-100 dark:bg-neutral-800 px-2 py-0.5 rounded-md">
+                  {allProducts.length}
+                </span>
+              </label>
+
+              {/* Dynamic Categories */}
               {categoryOrder.map((category) => {
                 const count = allProducts.filter((p) => p.category === category).length;
                 const isChecked = draft.categories.includes(category);
@@ -146,7 +185,7 @@ export default function FilterDrawer({
                       <Checkbox
                         checked={isChecked}
                         onCheckedChange={() => handleToggleCategory(category)}
-                        className="data-[state=checked]:bg-[#CCFF00] data-[state=checked]:text-[#0F1115] data-[state=checked]:border-[#CCFF00]"
+                        className="data-[state=checked]:bg-[#CCFF00] data-[state=checked]:text-[#0F1115] data-[state=checked]:border-[#CCFF00] border-neutral-300 dark:border-neutral-700 hover:border-[#CCFF00]"
                       />
                       <span className="text-xs font-bold text-neutral-800 dark:text-neutral-200 group-hover:text-black dark:group-hover:text-white">
                         {category}
@@ -165,9 +204,9 @@ export default function FilterDrawer({
           <div className="space-y-4 pt-6">
             <div className="flex items-center justify-between">
               <h4 className="text-xs font-black uppercase tracking-wider text-neutral-900 dark:text-white">
-                Price Range
+                PRICE RANGE
               </h4>
-              <span className="text-xs font-bold text-neutral-500">
+              <span className="text-xs font-bold text-neutral-600 dark:text-neutral-300">
                 ₹{draft.minPrice.toLocaleString("en-IN")} – ₹{draft.maxPrice.toLocaleString("en-IN")}
               </span>
             </div>
@@ -218,7 +257,7 @@ export default function FilterDrawer({
           {/* 3. MINIMUM DISCOUNT FILTER */}
           <div className="space-y-3 pt-6">
             <h4 className="text-xs font-black uppercase tracking-wider text-neutral-900 dark:text-white">
-              Minimum Discount
+              MINIMUM DISCOUNT
             </h4>
             <div className="grid grid-cols-2 gap-2">
               {DISCOUNT_OPTIONS.map((opt) => {
@@ -228,10 +267,10 @@ export default function FilterDrawer({
                     key={opt.value}
                     type="button"
                     onClick={() => setDraft((prev) => ({ ...prev, minDiscount: opt.value }))}
-                    className={`py-2 px-3 rounded-xl text-xs font-bold transition-all text-left flex items-center justify-between cursor-pointer border ${
+                    className={`py-2.5 px-3 rounded-xl text-xs font-bold transition-all text-left flex items-center justify-between cursor-pointer border ${
                       isSelected
-                        ? "bg-[#0F1115] text-[#CCFF00] border-[#CCFF00]"
-                        : "bg-neutral-50 dark:bg-[#181C24] text-neutral-700 dark:text-neutral-300 border-neutral-200 dark:border-neutral-700 hover:border-neutral-400"
+                        ? "bg-[#0F1115] text-[#CCFF00] border-[#CCFF00] shadow-sm"
+                        : "bg-neutral-50 dark:bg-[#181C24] text-neutral-700 dark:text-neutral-300 border-neutral-200 dark:border-neutral-700 hover:border-[#CCFF00]"
                     }`}
                   >
                     <span>{opt.label}</span>
@@ -242,10 +281,10 @@ export default function FilterDrawer({
             </div>
           </div>
 
-          {/* 4. AVAILABILITY & DELIVERY FILTERS */}
+          {/* 4. AVAILABILITY FILTER */}
           <div className="space-y-3 pt-6">
             <h4 className="text-xs font-black uppercase tracking-wider text-neutral-900 dark:text-white">
-              Availability & Delivery
+              AVAILABILITY
             </h4>
             <div className="space-y-2.5">
               <label className="flex items-center gap-3 p-2 rounded-xl hover:bg-neutral-100/70 dark:hover:bg-neutral-800/50 cursor-pointer transition-colors">
@@ -254,7 +293,7 @@ export default function FilterDrawer({
                   onCheckedChange={(checked) =>
                     setDraft((prev) => ({ ...prev, inStockOnly: Boolean(checked) }))
                   }
-                  className="data-[state=checked]:bg-[#CCFF00] data-[state=checked]:text-[#0F1115] data-[state=checked]:border-[#CCFF00]"
+                  className="data-[state=checked]:bg-[#CCFF00] data-[state=checked]:text-[#0F1115] data-[state=checked]:border-[#CCFF00] border-neutral-300 dark:border-neutral-700 hover:border-[#CCFF00]"
                 />
                 <span className="text-xs font-bold text-neutral-800 dark:text-neutral-200">
                   In Stock Only
@@ -267,10 +306,43 @@ export default function FilterDrawer({
                   onCheckedChange={(checked) =>
                     setDraft((prev) => ({ ...prev, expressOnly: Boolean(checked) }))
                   }
-                  className="data-[state=checked]:bg-[#CCFF00] data-[state=checked]:text-[#0F1115] data-[state=checked]:border-[#CCFF00]"
+                  className="data-[state=checked]:bg-[#CCFF00] data-[state=checked]:text-[#0F1115] data-[state=checked]:border-[#CCFF00] border-neutral-300 dark:border-neutral-700 hover:border-[#CCFF00]"
                 />
                 <span className="text-xs font-bold text-neutral-800 dark:text-neutral-200">
-                  Flash Express Delivery
+                  Fast Express Delivery
+                </span>
+              </label>
+            </div>
+          </div>
+
+          {/* 5. DELIVERY FILTER */}
+          <div className="space-y-3 pt-6">
+            <h4 className="text-xs font-black uppercase tracking-wider text-neutral-900 dark:text-white">
+              DELIVERY
+            </h4>
+            <div className="space-y-2.5">
+              <label className="flex items-center gap-3 p-2 rounded-xl hover:bg-neutral-100/70 dark:hover:bg-neutral-800/50 cursor-pointer transition-colors">
+                <Checkbox
+                  checked={draft.expressOnly}
+                  onCheckedChange={(checked) =>
+                    setDraft((prev) => ({ ...prev, expressOnly: Boolean(checked) }))
+                  }
+                  className="data-[state=checked]:bg-[#CCFF00] data-[state=checked]:text-[#0F1115] data-[state=checked]:border-[#CCFF00] border-neutral-300 dark:border-neutral-700 hover:border-[#CCFF00]"
+                />
+                <span className="text-xs font-bold text-neutral-800 dark:text-neutral-200">
+                  Fast Express Shipping
+                </span>
+              </label>
+              <label className="flex items-center gap-3 p-2 rounded-xl hover:bg-neutral-100/70 dark:hover:bg-neutral-800/50 cursor-pointer transition-colors">
+                <Checkbox
+                  checked={!draft.expressOnly}
+                  onCheckedChange={(checked) =>
+                    setDraft((prev) => ({ ...prev, expressOnly: !checked }))
+                  }
+                  className="data-[state=checked]:bg-[#CCFF00] data-[state=checked]:text-[#0F1115] data-[state=checked]:border-[#CCFF00] border-neutral-300 dark:border-neutral-700 hover:border-[#CCFF00]"
+                />
+                <span className="text-xs font-bold text-neutral-800 dark:text-neutral-200">
+                  Standard Delivery
                 </span>
               </label>
             </div>
@@ -282,9 +354,9 @@ export default function FilterDrawer({
           <button
             type="button"
             onClick={handleApply}
-            className="flex-1 py-3.5 px-4 bg-[#CCFF00] hover:bg-[#b8e600] active:scale-[0.98] text-[#0F1115] font-black text-sm rounded-2xl shadow-sm transition-all cursor-pointer border-none text-center"
+            className="w-full py-3.5 px-4 bg-[#CCFF00] hover:bg-[#b8e600] active:scale-[0.98] text-[#0F1115] font-black text-sm uppercase tracking-wider rounded-2xl shadow-sm transition-all cursor-pointer border-none text-center"
           >
-            Apply Filters {activeCount > 0 ? `(${activeCount})` : ""}
+            APPLY FILTERS
           </button>
         </div>
       </SheetContent>
