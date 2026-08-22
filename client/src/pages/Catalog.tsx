@@ -307,24 +307,34 @@ export default function Catalog() {
               {/* FILTERS BUTTON */}
               <button
                 type="button"
-                onClick={() => setIsDrawerOpen((prev) => !prev)}
+                onClick={() => setIsDrawerOpen(true)}
                 aria-label="Toggle filter panel"
-                className={`inline-flex items-center gap-2.5 px-4 py-2.5 rounded-xl text-xs font-black tracking-wider uppercase transition-all duration-200 cursor-pointer border ${
-                  isDrawerOpen
-                    ? "bg-[#000000] text-[#CCFF00] border-[#CCFF00] shadow-[0_0_15px_rgba(204,255,0,0.4)] ring-2 ring-[#CCFF00]/40 scale-[1.02]"
-                    : activeFilterCount > 0
-                    ? "bg-[#000000] text-[#CCFF00] border-[#CCFF00] shadow-[0_0_12px_rgba(204,255,0,0.3)] hover:scale-[1.02]"
-                    : "bg-[#000000] text-[#CCFF00] border-[#000000] hover:border-[#CCFF00] hover:shadow-[0_0_14px_rgba(204,255,0,0.3)] hover:scale-[1.02]"
-                }`}
+                className={`relative group inline-flex items-center gap-2.5 px-5 py-2.5 rounded-full bg-[#000000] text-[#CCFF00] font-black text-xs tracking-wider uppercase border transition-all duration-200 shadow-md cursor-pointer ${
+                  isDrawerOpen || activeFilterCount > 0
+                    ? "border-[#CCFF00] shadow-[0_0_15px_rgba(204,255,0,0.25)]"
+                    : "border-[#000000] hover:border-[#CCFF00]/50 hover:shadow-[0_0_12px_rgba(204,255,0,0.18)] hover:-translate-y-0.5"
+                } active:scale-95`}
               >
-                <SlidersHorizontal
-                  size={15}
-                  className="text-[#CCFF00]"
-                  strokeWidth={2.5}
-                />
+                {/* Custom 3-Line Filter Icon in #CCFF00 */}
+                <svg
+                  className="w-4 h-4 text-[#CCFF00] transition-transform duration-200 group-hover:scale-110"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2.5"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
+                  <line x1="4" y1="6" x2="20" y2="6"></line>
+                  <line x1="7" y1="12" x2="17" y2="12"></line>
+                  <line x1="10" y1="18" x2="14" y2="18"></line>
+                </svg>
+
                 <span>FILTERS</span>
+
+                {/* Active Count Badge */}
                 {activeFilterCount > 0 && (
-                  <span className="inline-grid place-items-center w-5 h-5 rounded-full bg-[#CCFF00] text-[#000000] text-[11px] font-black ml-0.5 shadow-2xs">
+                  <span className="flex items-center justify-center min-w-[20px] h-5 px-1.5 text-[11px] font-black bg-[#CCFF00] text-[#000000] rounded-full">
                     {activeFilterCount}
                   </span>
                 )}
