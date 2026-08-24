@@ -8,7 +8,7 @@ import NotFound from "@/pages/NotFound";
 import { BrowserRouter, Route, Routes } from "react-router-dom";
 import ErrorBoundary from "./components/ErrorBoundary";
 import { ThemeProvider } from "./contexts/ThemeContext";
-import Home from "./pages/Home";
+import HomePage from "./pages/HomePage";
 import StorefrontLayout from "./components/StorefrontLayout";
 import { CommerceProvider } from "./contexts/CommerceContext";
 import Catalog from "./pages/Catalog";
@@ -41,7 +41,7 @@ function App() {
         // switchable
       >
         <TooltipProvider><AuthProvider><CommerceProvider><BrowserRouter><Toaster /><StorefrontLayout><Routes>
-          <Route path="/" element={<Home />} />
+          <Route path="/" element={<HomePage />} />
           <Route path="/shop" element={<Catalog />} />
           <Route path="/products" element={<Catalog />} />
           <Route path="/category/:categoryName" element={<Catalog />} />

@@ -1,7 +1,3 @@
-/**
- * Flash product card — a high-key editorial product stage with concise obsidian data,
- * multi-angle hover crossfade with Framer Motion, color swatch switching, and unified brand green action signals.
- */
 import { useEffect, useRef, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { Heart, ShoppingCart, Sparkles } from "lucide-react";
@@ -41,14 +37,12 @@ export default function ProductCard({
     if (debounceTimerRef.current) clearTimeout(debounceTimerRef.current);
     if (cycleIntervalRef.current) clearInterval(cycleIntervalRef.current);
 
-    // 200ms debounce delay to prevent jumpy hover states
     debounceTimerRef.current = setTimeout(() => {
       setIsHovered(true);
       if (activeGallery.length > 1) {
         setActiveImageIndex(1);
       }
 
-      // Smoothly cycle through alternative angles of the exact product
       cycleIntervalRef.current = setInterval(() => {
         setActiveImageIndex((prevIndex) => (prevIndex + 1) % activeGallery.length);
       }, 1500);
@@ -76,29 +70,45 @@ export default function ProductCard({
   }, []);
 
   const currentImageUrl = activeGallery[activeImageIndex] || activeVariant?.image || product.image;
+  const discountPercent = getDiscount(product);
 
   return (
     <article
-      className="commerce-product-card group"
+      className="group relative flex flex-col justify-between rounded-2xl sm:rounded-3xl bg-white dark:bg-[#0E1015] border border-neutral-200/80 dark:border-neutral-800/80 p-3 sm:p-4 transition-all duration-300 hover:shadow-xl hover:shadow-black/5 dark:hover:shadow-black/40 hover:-translate-y-1 overflow-hidden"
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
     >
-      <span className="deal-tag">-{getDiscount(product)}%</span>
-      {product.express && (
-        <span className="express-tag">
-          <Sparkles size={11} /> Express
-        </span>
-      )}
+      {/* Top Badges */}
+      <div className="absolute top-5 left-5 z-20 flex flex-col gap-1.5 pointer-events-none">
+        {discountPercent > 0 && (
+          <span className="px-2 py-0.5 rounded-md bg-[#CCFF00] text-neutral-950 font-black text-[10px] sm:text-xs shadow-sm w-fit">
+            -{discountPercent}%
+          </span>
+        )}
+        {product.express && (
+          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-neutral-900/90 text-white dark:bg-white/90 dark:text-neutral-950 font-bold text-[10px] backdrop-blur-sm shadow-sm w-fit">
+            <Sparkles size={10} className="text-[#CCFF00] dark:text-black" /> Express
+          </span>
+        )}
+      </div>
+
+      {/* Wishlist Button */}
       <button
-        className={`favourite commerce-favourite ${isSaved ? "is-saved" : ""}`}
+        type="button"
+        className={`absolute top-5 right-5 z-20 w-8 h-8 sm:w-9 sm:h-9 rounded-full flex items-center justify-center transition-all duration-200 cursor-pointer ${
+          isSaved
+            ? "bg-rose-500 text-white shadow-md shadow-rose-500/20"
+            : "bg-white/80 dark:bg-neutral-800/80 text-neutral-600 dark:text-neutral-300 hover:text-rose-500 dark:hover:text-rose-400 backdrop-blur-md border border-neutral-200/50 dark:border-neutral-700/50"
+        }`}
         aria-label={`Save ${product.name}`}
         onClick={() => toggleWishlist(product.id)}
       >
         <Heart size={16} fill={isSaved ? "currentColor" : "none"} />
       </button>
 
+      {/* Media Aspect Stage */}
       <Link
-        className="commerce-product-card__media relative w-full aspect-square bg-[#F5F5F7] dark:bg-[#14171E] rounded-2xl p-3 flex items-center justify-center overflow-hidden group block"
+        className="relative w-full aspect-square bg-gradient-to-b from-neutral-100/80 to-neutral-200/40 dark:from-[#14171E] dark:to-[#0B0D10] rounded-xl sm:rounded-2xl p-4 sm:p-6 flex items-center justify-center overflow-hidden block"
         to={`/product/${product.id}`}
       >
         <AnimatePresence mode="wait">
@@ -107,27 +117,34 @@ export default function ProductCard({
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            transition={{ duration: 0.3, ease: "easeInOut" }}
+            transition={{ duration: 0.25, ease: "easeInOut" }}
             className="w-full h-full flex items-center justify-center"
           >
             <motion.div
-              animate={{ scale: isHovered ? 1.05 : 1.0 }}
+              animate={{ scale: isHovered ? 1.06 : 1.0 }}
               transition={{ duration: 0.3, ease: "easeOut" }}
               className="w-full h-full flex items-center justify-center"
             >
-              <SafeImage src={currentImageUrl} alt={product.name} className="w-full h-full object-contain object-center transition-transform duration-500 group-hover:scale-105" />
+              <SafeImage
+                src={currentImageUrl}
+                alt={product.name}
+                className="w-full h-full max-h-[180px] sm:max-h-[220px] object-contain object-center transition-transform duration-500"
+              />
             </motion.div>
           </motion.div>
         </AnimatePresence>
       </Link>
 
-      <div className="commerce-product-card__detail">
-        <div className="flex items-center justify-between">
-          <p className="text-[11px] font-semibold text-gray-500 uppercase tracking-wider">{product.brand}</p>
+      {/* Card Details */}
+      <div className="flex flex-col flex-1 pt-3 sm:pt-4 space-y-1.5">
+        <div className="flex items-center justify-between gap-2">
+          <p className="text-[10px] sm:text-xs font-extrabold text-neutral-400 dark:text-neutral-500 uppercase tracking-wider truncate">
+            {product.brand}
+          </p>
 
-          {/* Interactive Color Swatch Dots */}
+          {/* Color Swatches */}
           {product.colors && product.colors.length > 0 && (
-            <div className="flex items-center gap-1">
+            <div className="flex items-center gap-1 shrink-0">
               {product.colors.slice(0, 4).map((colorHex) => {
                 const isSelected = selectedColor === colorHex;
                 return (
@@ -145,10 +162,10 @@ export default function ProductCard({
                       setSelectedColor(colorHex);
                       setActiveImageIndex(0);
                     }}
-                    className={`w-3 h-3 rounded-full border transition-all duration-150 ${
+                    className={`w-3 h-3 rounded-full border transition-all duration-150 cursor-pointer ${
                       isSelected
-                        ? "ring-2 ring-[#0F1115] ring-offset-1 scale-110 border-transparent shadow-sm"
-                        : "border-gray-300 hover:scale-110"
+                        ? "ring-2 ring-[#CCFF00] scale-110 border-transparent shadow-sm"
+                        : "border-neutral-300 dark:border-neutral-700 hover:scale-110"
                     }`}
                     style={{ backgroundColor: colorHex }}
                     aria-label={`Select ${colorHex} color`}
@@ -156,7 +173,7 @@ export default function ProductCard({
                 );
               })}
               {product.colors.length > 4 && (
-                <span className="text-[9px] text-gray-400 font-semibold ml-0.5">
+                <span className="text-[9px] font-bold text-neutral-400 dark:text-neutral-500">
                   +{product.colors.length - 4}
                 </span>
               )}
@@ -164,25 +181,46 @@ export default function ProductCard({
           )}
         </div>
 
-        <Link to={`/product/${product.id}`}>
-          <h3>{product.name}</h3>
+        {/* Title */}
+        <Link to={`/product/${product.id}`} className="group-hover:text-[#88aa00] dark:group-hover:text-[#CCFF00] transition-colors">
+          <h3 className="text-xs sm:text-sm font-bold text-neutral-900 dark:text-white line-clamp-2 leading-snug">
+            {product.name}
+          </h3>
         </Link>
-        <span className="availability-line">{product.stock} ready to dispatch</span>
-        <div className="price-line">
-          <strong>{formatINR(product.price)}</strong>
-          <del>{formatINR(product.mrp)}</del>
+
+        <p className="text-[10px] sm:text-xs text-emerald-600 dark:text-emerald-400 font-semibold">
+          {product.stock} ready to dispatch
+        </p>
+
+        {/* Price Line */}
+        <div className="flex items-baseline gap-2 pt-1 mt-auto">
+          <strong className="text-sm sm:text-base font-black text-neutral-900 dark:text-white">
+            {formatINR(product.price)}
+          </strong>
+          {product.mrp && product.mrp > product.price && (
+            <del className="text-xs font-medium text-neutral-400 dark:text-neutral-500 line-through">
+              {formatINR(product.mrp)}
+            </del>
+          )}
         </div>
       </div>
-      <div className="commerce-product-card__actions">
-        <button className="card-quick-view" onClick={() => onQuickView?.(product)}>
+
+      {/* Card Actions */}
+      <div className="flex items-center gap-2 pt-3 mt-2 border-t border-neutral-100 dark:border-neutral-800/80">
+        <button
+          type="button"
+          className="flex-1 py-2 px-3 rounded-xl bg-neutral-100 dark:bg-neutral-800 text-neutral-800 dark:text-neutral-200 font-bold text-xs hover:bg-neutral-200 dark:hover:bg-neutral-700 transition-colors cursor-pointer"
+          onClick={() => onQuickView?.(product)}
+        >
           Quick view
         </button>
         <button
-          className="add-cart"
+          type="button"
+          className="p-2 sm:p-2.5 rounded-xl bg-[#CCFF00] text-neutral-950 hover:bg-[#b8e600] active:scale-95 transition-all shadow-sm cursor-pointer flex items-center justify-center shrink-0"
           onClick={() => addToCart(product)}
           aria-label={`Add ${product.name} to cart`}
         >
-          <ShoppingCart size={17} />
+          <ShoppingCart size={16} />
         </button>
       </div>
     </article>
