@@ -39,7 +39,7 @@ const quickPrompts = [
 const starterMessage: AssistantMessage = {
   id: "starter",
   role: "assistant",
-  text: "Welcome to Flash Buyer Copilot. Tell me your target item, budget, or specifications — I’ll scan the live catalog and shortlist recommendations instantly.",
+  text: "Hello! I'm your Flash Shopping Concierge. Whether you're hunting for running shoes, wireless audio, order status updates, or exclusive promo codes — I'm here to curate your experience. What can I find for you today?",
 };
 
 function findCatalogMatches(query: string) {
@@ -87,6 +87,8 @@ function findCatalogMatches(query: string) {
           "that",
           "for",
           "the",
+          "good",
+          "any",
         ].includes(term)
     );
 
@@ -129,28 +131,81 @@ function findCatalogMatches(query: string) {
 }
 
 function answerQuery(query: string): Pick<AssistantMessage, "text" | "productIds"> {
-  const normalized = query.toLowerCase();
+  const normalized = query.toLowerCase().trim();
 
-  if (/deliver|delivery|arrive|shipping|when.*order|courier|dispatch/.test(normalized)) {
+  // Greetings & casual concierge check-ins
+  if (/^(hi|hello|hey|yo|howdy|sup|good\s*(morning|afternoon|evening)|help)\b/i.test(normalized)) {
     return {
-      text: "⚡ Flash Express Delivery reaches verified metro pin codes within 24 hours. Standard deliveries arrive in 2–4 business days with live tracking inside your Flash Account dashboard.",
-    };
-  }
-  if (/return|refund|exchange|policy|money-back/.test(normalized)) {
-    return {
-      text: "Flash provides a 15-day hassle-free return window on all catalog purchases. Instant refunds are credited to your original payment method within 15 minutes of item pickup.",
-    };
-  }
-  if (/flash10|coupon|discount|promo|code|deal|offer|saving/.test(normalized)) {
-    return {
-      text: "Use promo code FLASH10 at checkout for an instant 10% cashback on all prepaid orders! You can also explore our Top Deals runway for curated drops up to 60% off.",
+      text: "Hey! Great to have you here at Flash. I'm connected in real time to our live catalog, delivery network, and discount engines.\n\nLooking for running shoes, wireless audio for workouts, or curious about the FLASH10 promo? Just let me know what vibe or budget you're aiming for!",
     };
   }
 
+  // Delivery & Tracking
+  if (/deliver|delivery|arrive|shipping|when.*order|courier|dispatch|track/.test(normalized)) {
+    return {
+      text: "⚡ **Flash Express & Priority Logistics**\n\nAll verified catalog orders are dispatched from our nearest fulfillment hub:\n• **Flash Express:** Delivered in **under 24 hours** to eligible metro locations.\n• **Standard Courier:** Arrives nationwide within **2 to 4 business days** with end-to-end SMS & WhatsApp tracking.\n• **Live Rider Tracking:** Check real-time progress anytime inside your **Account > My Orders** dashboard.",
+    };
+  }
+
+  // Return policy, refunds & exchanges
+  if (/return|refund|exchange|policy|money-back|guarantee/.test(normalized)) {
+    return {
+      text: "🛡️ **15-Day Flash Assurance Policy**\n\nEvery piece in our catalog is backed by our zero-friction guarantee:\n• **15-Day Free Returns:** Tap 'Return Item' in your Order Activity anytime within 15 days.\n• **Complimentary Doorstep Pickup:** Our courier inspects and retrieves the package right from your door.\n• **Instant 15-Minute Refund:** Funds are credited back to your original payment method or Flash Wallet as soon as the item is picked up.",
+    };
+  }
+
+  // FLASH10 promo code & discounts
+  if (/flash10|coupon|discount|promo|code|deal|offer|saving|cashback/.test(normalized)) {
+    const deals = products.filter((p) => p.mrp && p.mrp > p.price).slice(0, 3);
+    return {
+      text: "⚡ **Insider Savings & Deals Drop**\n\nHere’s how you can save on your haul today:\n• **Use Code FLASH10:** Enter `FLASH10` at checkout for an instant **10% cashback** on all prepaid orders.\n• **Top Deals Catalog:** Save up to **60% off** on curated seasonal overstock.\n• **Flash Club Rewards:** Earn 2x reward points on every completed order.\n\nHere are some of our most popular high-value drops right now:",
+      productIds: deals.map((p) => p.id),
+    };
+  }
+
+  // Running shoes / sneakers / footwear
+  if (/running|shoe|sneaker|footwear/.test(normalized)) {
+    const matches = findCatalogMatches(query);
+    const budgetStr = normalized.match(/(?:under|below|less than)\s*(?:₹|rs\.?|inr)?\s*([\d,]+)/)?.[1];
+    const budgetMsg = budgetStr ? ` under ₹${budgetStr}` : "";
+    return {
+      text: `Looking to elevate your training? I’ve curated our top high-performance running silhouettes${budgetMsg} engineered with responsive foam cushioning and breathable mesh uppers.\n\nTap the **(+)** button to drop any pair straight into your cart, or click the title to view multi-angle photos!`,
+      productIds: matches.map((p) => p.id),
+    };
+  }
+
+  // Wireless audio / headphones / earbuds / workouts
+  if (/audio|headphone|speaker|earbud|sound|noise|wireless/.test(normalized)) {
+    const matches = findCatalogMatches(query);
+    return {
+      text: "Nothing sets the workout tempo like the right sound profile. Here are our top sweat-resistant, ultra-secure wireless audio picks featuring active noise cancellation and punchy bass profiles that keep you locked in:",
+      productIds: matches.map((p) => p.id),
+    };
+  }
+
+  // Watches & Chronographs
+  if (/watch|chrono|smartwatch/.test(normalized)) {
+    const matches = findCatalogMatches(query);
+    return {
+      text: "A signature timepiece brings the entire aesthetic together. Here are our premier chronographs and fitness smartwatches combining precision build, obsidian accents, and sapphire-coated glass:",
+      productIds: matches.map((p) => p.id),
+    };
+  }
+
+  // Fashion / Streetwear / Apparel
+  if (/fashion|hoodie|jacket|cargo|trousers|streetwear|apparel/.test(normalized)) {
+    const matches = findCatalogMatches(query);
+    return {
+      text: "Curated for the runway, engineered for daily motion. Here are our standout streetwear drops crafted with heavyweight French terry and architectural tailoring:",
+      productIds: matches.map((p) => p.id),
+    };
+  }
+
+  // General catalog search
   const matches = findCatalogMatches(query);
   if (!matches.length) {
     return {
-      text: "I couldn't match that exact product specification in our current active catalog. Try asking for specific categories or budgets, like 'wireless audio for workouts' or 'sneakers under ₹4000'.",
+      text: `I couldn't find an exact match for "${query}" in our current collection, but our inventory updates with new drops daily! Could I interest you in exploring our latest **Footwear**, **Wireless Audio**, or **Top Deals**? Let me know your style or budget and I'll find great alternatives.`,
     };
   }
 
@@ -160,7 +215,7 @@ function answerQuery(query: string): Pick<AssistantMessage, "text" | "productIds
       : "";
 
   return {
-    text: `Here are the top catalog recommendations for your search.${budgetNote} Click (+) to instantly add to your bag or click the title to view details.`,
+    text: `Here are our top verified catalog recommendations for your search.${budgetNote} Click (+) to add directly to your bag or click the title to inspect specifications:`,
     productIds: matches.map((p) => p.id),
   };
 }
@@ -257,25 +312,21 @@ export default function AskAI({
 
   return (
     <>
-      {/* 1. FLOATING "ASK AI" TRIGGER BUTTON */}
+      {/* 1. FLOATING "ASK AI" PILL BUTTON */}
       <button
         onClick={handleOpen}
-        className="fixed bottom-6 right-6 z-40 flex items-center gap-2 px-4 py-2.5 rounded-full bg-[#000000] text-[#CCFF00] border border-[#CCFF00]/40 hover:border-[#CCFF00] shadow-[0_0_20px_rgba(0,0,0,0.8)] hover:shadow-[0_0_18px_rgba(204,255,0,0.3)] transition-all duration-200 hover:-translate-y-0.5 active:scale-95 group font-['Plus_Jakarta_Sans',sans-serif]"
-        aria-label="Ask AI Assistant"
+        className="fixed bottom-6 right-6 z-40 flex items-center gap-2.5 px-4 py-2 rounded-full bg-[#111317] hover:bg-[#181B22] text-white border border-neutral-800/80 hover:border-[#CCFF00]/60 shadow-[0_8px_30px_rgb(0,0,0,0.35)] hover:shadow-[0_0_20px_rgba(204,255,0,0.25)] transition-all duration-200 hover:-translate-y-0.5 active:scale-95 group font-['Plus_Jakarta_Sans',sans-serif]"
+        aria-label="Open Flash AI Assistant"
       >
-        {/* Sparkle / Bot Icon */}
-        <svg
-          className="w-4 h-4 text-[#CCFF00] transition-transform duration-300 group-hover:rotate-12"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="2.5"
-          strokeLinecap="round"
-          strokeLinejoin="round"
+        {/* Flash Signature Neon Sparkle */}
+        <svg 
+          className="w-4 h-4 text-[#CCFF00] transition-transform duration-300 group-hover:scale-110 group-hover:rotate-12" 
+          viewBox="0 0 24 24" 
+          fill="currentColor"
         >
-          <path d="m12 3-1.9 5.8a2 2 0 0 1-1.3 1.3L3 12l5.8 1.9a2 2 0 0 1 1.3 1.3L12 21l1.9-5.8a2 2 0 0 1 1.3-1.3Z" />
+          <path d="M12 2L14.4 8.6L21 11L14.4 13.4L12 20L9.6 13.4L3 11L9.6 8.6L12 2Z" />
         </svg>
-        <span className="text-xs font-black tracking-widest uppercase text-white group-hover:text-[#CCFF00] transition-colors">
+        <span className="text-xs font-black tracking-wider uppercase text-white group-hover:text-[#CCFF00] transition-colors">
           ASK AI
         </span>
       </button>
@@ -360,7 +411,7 @@ export default function AskAI({
               {/* Chat Message Scroll Area */}
               <div
                 ref={scrollRef}
-                className="flex-1 overflow-y-auto p-4 space-y-4 bg-[#000000] scrollbar-thin scrollbar-thumb-[#181C24]"
+                className="flex-1 copilot-chat-scroll p-4 space-y-4 bg-[#000000]"
               >
                 {messages.map((message) => {
                   const isUser = message.role === "user";
@@ -464,7 +515,7 @@ export default function AskAI({
                     Suggested Inquiries
                   </span>
                 </div>
-                <div className="flex gap-2 overflow-x-auto pb-1 no-scrollbar">
+                <div className="flex gap-2 suggested-chips-scroll pb-2.5">
                   {quickPrompts.map((prompt) => (
                     <button
                       key={prompt}
