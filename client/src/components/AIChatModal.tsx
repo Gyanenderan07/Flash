@@ -1,5 +1,5 @@
 /**
- * Flash Assistant / Copilot compatibility forwarder
+ * AIChatModal compatibility forwarder
  */
 import AskAI, { AskAIProps, AssistantMessage } from "./AskAI";
 

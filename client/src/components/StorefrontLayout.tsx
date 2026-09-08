@@ -10,7 +10,7 @@ import { useCommerce } from "@/contexts/CommerceContext";
 import { categoryOrder, formatINR, getProduct } from "@/data/mockProducts";
 import { useAuth } from "@/contexts/AuthContext";
 import AuthPanel from "@/components/AuthPanel";
-import FlashAssistant from "@/components/FlashAssistant";
+import AskAI from "@/components/AskAI";
 import SupportDrawer from "@/components/SupportDrawer";
 import QuickCartDrawer from "@/components/cart/QuickCartDrawer";
 import SafeImage from "@/components/common/SafeImage";
@@ -240,7 +240,7 @@ export default function StorefrontLayout({ children }: { children: ReactNode }) 
         </div>
       )}
 
-      <FlashAssistant open={aiOpen} onOpen={() => setAiOpen(true)} onClose={() => setAiOpen(false)} seedQuery={aiSeed} />
+      <AskAI open={aiOpen} onOpen={() => setAiOpen(true)} onClose={() => setAiOpen(false)} seedQuery={aiSeed} />
       <SupportDrawer isOpen={supportOpen} onClose={() => setSupportOpen(false)} onOpenAiChat={(query) => { setAiSeed(query); setAiOpen(true); }} />
 
       <footer className="site-footer">
