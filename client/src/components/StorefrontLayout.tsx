@@ -14,6 +14,8 @@ import AskAI from "@/components/AskAI";
 import SupportDrawer from "@/components/SupportDrawer";
 import QuickCartDrawer from "@/components/cart/QuickCartDrawer";
 import SafeImage from "@/components/common/SafeImage";
+import googlePlayBadge from "@/assets/badges/google-play-badge.png";
+import appStoreBadge from "@/assets/badges/app-store-badge.png";
 
 function FlashLogo({ compact = false }: { compact?: boolean }) {
   return (
@@ -291,40 +293,60 @@ export default function StorefrontLayout({ children }: { children: ReactNode }) 
             <a href="#top">Return Policy</a>
           </section>
 
-          {/* Requirement 5: OFFICIAL PLAY STORE & APP STORE VECTOR LOGOS IN FOOTER */}
+          {/* Requirement 5: OFFICIAL PLAY STORE & APP STORE PNG BADGES IN FOOTER */}
           <section className="app-links">
-            <h3>Download The App</h3>
-            <div className="flex flex-col sm:flex-row gap-3 mt-1">
-              {/* Google Play Store Official Vector Badge */}
-              <a
-                href="#top"
-                className="flex items-center gap-3 px-3.5 py-2 rounded-xl bg-[#0F1115] border border-[#26282E] text-white hover:border-[#CCFF00] hover:brightness-110 transition-all duration-200 active:scale-[0.98] shadow-sm"
-              >
-                <svg width="22" height="22" viewBox="0 0 512 512" fill="none" xmlns="http://www.w3.org/2000/svg" className="flex-shrink-0">
-                  <path d="M48 24.3C47 26 47 28.5 47 31.7V480.3C47 483.5 47 486 48 487.7L276 256L48 24.3Z" fill="#2196F3" />
-                  <path d="M351 180.8L276 256L351 331.2L428.5 287.3C445.8 277.5 445.8 234.5 428.5 224.7L351 180.8Z" fill="#FFC107" />
-                  <path d="M48 487.7C55 491.5 64 491.8 72.8 486.8L351 331.2L276 256L48 487.7Z" fill="#4CAF50" />
-                  <path d="M48 24.3L276 256L351 180.8L72.8 25.2C64 20.2 55 20.5 48 24.3Z" fill="#F44336" />
-                </svg>
-                <div className="flex flex-col text-left">
-                  <span className="text-[8px] font-bold uppercase tracking-widest text-gray-400 leading-tight">GET IT ON</span>
-                  <span className="text-xs font-bold text-white tracking-tight leading-tight">Google Play</span>
-                </div>
-              </a>
+            <div className="flex flex-col gap-3">
+              <span className="text-xs font-bold uppercase tracking-wider text-neutral-900 dark:text-neutral-100">
+                Download The App
+              </span>
+              
+              <div className="flex items-center gap-3 flex-wrap sm:flex-nowrap">
+                {/* Google Play Store Badge */}
+                <a
+                  href="#google-play"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-2.5 px-3.5 py-2 rounded-xl bg-black border border-neutral-800 text-white hover:border-[#CCFF00] hover:brightness-110 transition-all duration-200 active:scale-[0.98] shadow-sm shrink-0"
+                >
+                  <img
+                    src={googlePlayBadge || "/images/google-play-badge.png"}
+                    alt="Google Play"
+                    className="w-5 h-5 object-contain shrink-0"
+                    loading="lazy"
+                  />
+                  <div className="flex flex-col text-left">
+                    <span className="text-[8px] font-bold uppercase tracking-widest text-gray-400 leading-tight">
+                      GET IT ON
+                    </span>
+                    <span className="text-xs font-bold text-white tracking-tight leading-tight">
+                      Google Play
+                    </span>
+                  </div>
+                </a>
 
-              {/* Apple App Store Official Vector Badge */}
-              <a
-                href="#top"
-                className="flex items-center gap-3 px-3.5 py-2 rounded-xl bg-[#0F1115] border border-[#26282E] text-white hover:border-[#CCFF00] hover:brightness-110 transition-all duration-200 active:scale-[0.98] shadow-sm"
-              >
-                <svg width="22" height="22" viewBox="0 0 170 170" fill="currentColor" xmlns="http://www.w3.org/2000/svg" className="flex-shrink-0 text-white">
-                  <path d="M150.37 130.25c-2.45 5.66-5.35 10.87-8.71 15.66-4.58 6.53-8.33 11.05-11.22 13.56-4.48 4.12-9.28 6.23-14.42 6.35-3.69 0-8.14-1.05-13.32-3.18-5.19-2.12-9.97-3.17-14.34-3.17-4.58 0-9.49 1.05-14.75 3.17-5.26 2.13-9.5 3.24-12.74 3.35-4.99.13-9.79-1.9-14.42-6.08-3.47-3.1-7.46-8.09-11.96-14.97-6.53-9.97-11.75-20.89-15.66-32.78-3.91-11.89-5.87-23.11-5.87-33.67 0-14.88 3.75-27.27 11.24-37.16 7.49-9.89 16.92-14.92 28.29-15.09 4.87 0 10.15 1.25 15.86 3.76 5.71 2.51 9.8 3.76 12.27 3.76 2.12 0 6.34-1.25 12.65-3.76 6.31-2.51 11.72-3.64 16.24-3.39 12.74.88 22.86 5.69 30.36 14.42-11.24 6.8-16.71 16.32-16.42 28.56.29 9.6 4.07 17.65 11.34 24.16 7.27 6.51 16.03 10.18 26.28 11.01-2.45 7.37-5.74 15.06-9.87 23.08zm-26.69-106.6c0 6.94-2.53 13.56-7.59 19.86-5.06 6.3-11.47 10.15-19.23 11.55-.26-1.02-.39-2.04-.39-3.06 0-6.94 2.68-13.78 8.04-20.52 5.36-6.74 12.01-10.74 19.95-12.01.13 1.39.22 2.78.22 4.18z" />
-                </svg>
-                <div className="flex flex-col text-left">
-                  <span className="text-[8px] font-bold uppercase tracking-widest text-gray-400 leading-tight">Download on the</span>
-                  <span className="text-xs font-bold text-white tracking-tight leading-tight">App Store</span>
-                </div>
-              </a>
+                {/* Apple App Store Badge */}
+                <a
+                  href="#app-store"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-2.5 px-3.5 py-2 rounded-xl bg-black border border-neutral-800 text-white hover:border-[#CCFF00] hover:brightness-110 transition-all duration-200 active:scale-[0.98] shadow-sm shrink-0"
+                >
+                  <img
+                    src={appStoreBadge || "/images/app-store-badge.png"}
+                    alt="App Store"
+                    className="w-5 h-5 object-contain shrink-0 brightness-0 invert"
+                    loading="lazy"
+                  />
+                  <div className="flex flex-col text-left">
+                    <span className="text-[8px] font-bold uppercase tracking-widest text-gray-400 leading-tight">
+                      DOWNLOAD ON THE
+                    </span>
+                    <span className="text-xs font-bold text-white tracking-tight leading-tight">
+                      App Store
+                    </span>
+                  </div>
+                </a>
+              </div>
             </div>
           </section>
         </div>
