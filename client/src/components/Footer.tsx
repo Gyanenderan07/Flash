@@ -48,7 +48,7 @@ export function DownloadAppBadges() {
           <img
             src={appStoreBadge || "/images/app-store-badge.png"}
             alt="App Store"
-            className="w-5 h-5 object-contain shrink-0 brightness-0 invert"
+            className="w-5 h-5 object-contain shrink-0"
             loading="lazy"
           />
           <div className="flex flex-col text-left">
@@ -78,6 +78,11 @@ export default function Footer({ onOpenSupport }: FooterProps) {
               <Zap size={17} fill="currentColor" />
             </button>
           </form>
+
+          {/* Download The App on the left side under newsletter */}
+          <div className="mt-6">
+            <DownloadAppBadges />
+          </div>
         </section>
 
         <section>
@@ -127,10 +132,6 @@ export default function Footer({ onOpenSupport }: FooterProps) {
           <a href="#top">Privacy Policy</a>
           <a href="#top">Terms of Service</a>
           <a href="#top">Return Policy</a>
-        </section>
-
-        <section className="app-links">
-          <DownloadAppBadges />
         </section>
       </div>
 

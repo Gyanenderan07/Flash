@@ -256,51 +256,14 @@ export default function StorefrontLayout({ children }: { children: ReactNode }) 
                 <Zap size={17} fill="currentColor" />
               </button>
             </form>
-          </section>
-          <section>
-            <h3>Shop</h3>
-            <Link to="/shop">All Categories</Link>
-            <Link to="/shop?sort=discount">Today’s Deals</Link>
-            <Link to="/shop?sort=rating">Best Sellers</Link>
-            <Link to="/shop?sort=newest">New Arrivals</Link>
-          </section>
 
-          {/* Requirement 4: Customer Support Links Trigger Drawer */}
-          <section>
-            <h3>Customer Service</h3>
-            <button type="button" className="footer-[#A0A4B0] hover:text-[#CCFF00] text-left text-xs transition-colors" onClick={() => setSupportOpen(true)}>
-              Help Center
-            </button>
-            <button type="button" className="footer-[#A0A4B0] hover:text-[#CCFF00] text-left text-xs transition-colors" onClick={() => setSupportOpen(true)}>
-              Track Order
-            </button>
-            <Link to="/cart">Shipping & Returns</Link>
-            <button type="button" className="footer-[#A0A4B0] hover:text-[#CCFF00] text-left text-xs transition-colors" onClick={() => setSupportOpen(true)}>
-              Contact Us
-            </button>
-          </section>
-
-          <section>
-            <h3>Company</h3>
-            <Link to="/flash-club">About Flash</Link>
-            <Link to="/flash-club">Flash Club</Link>
-            <Link to="/shop">Flash Edit</Link>
-          </section>
-          <section>
-            <h3>Policies</h3>
-            <a href="#top">Privacy Policy</a>
-            <a href="#top">Terms of Service</a>
-            <a href="#top">Return Policy</a>
-          </section>
-
-          {/* Requirement 5: OFFICIAL PLAY STORE & APP STORE PNG BADGES IN FOOTER */}
-          <section className="app-links">
-            <div className="flex flex-col gap-3">
+            {/* Download The App section placed on left side under newsletter */}
+            <div className="mt-6 flex flex-col gap-2.5">
               <span className="text-xs font-bold uppercase tracking-wider text-neutral-900 dark:text-neutral-100">
                 Download The App
               </span>
               
-              <div className="flex items-center gap-3 flex-wrap sm:flex-nowrap">
+              <div className="flex items-center gap-2.5 flex-wrap">
                 {/* Google Play Store Badge */}
                 <a
                   href="#google-play"
@@ -334,7 +297,7 @@ export default function StorefrontLayout({ children }: { children: ReactNode }) 
                   <img
                     src={appStoreBadge || "/images/app-store-badge.png"}
                     alt="App Store"
-                    className="w-5 h-5 object-contain shrink-0 brightness-0 invert"
+                    className="w-5 h-5 object-contain shrink-0"
                     loading="lazy"
                   />
                   <div className="flex flex-col text-left">
@@ -348,6 +311,43 @@ export default function StorefrontLayout({ children }: { children: ReactNode }) 
                 </a>
               </div>
             </div>
+          </section>
+
+          <section>
+            <h3>Shop</h3>
+            <Link to="/shop">All Categories</Link>
+            <Link to="/shop?sort=discount">Today’s Deals</Link>
+            <Link to="/shop?sort=rating">Best Sellers</Link>
+            <Link to="/shop?sort=newest">New Arrivals</Link>
+          </section>
+
+          {/* Requirement 4: Customer Support Links Trigger Drawer */}
+          <section>
+            <h3>Customer Service</h3>
+            <button type="button" className="footer-[#A0A4B0] hover:text-[#CCFF00] text-left text-xs transition-colors" onClick={() => setSupportOpen(true)}>
+              Help Center
+            </button>
+            <button type="button" className="footer-[#A0A4B0] hover:text-[#CCFF00] text-left text-xs transition-colors" onClick={() => setSupportOpen(true)}>
+              Track Order
+            </button>
+            <Link to="/cart">Shipping & Returns</Link>
+            <button type="button" className="footer-[#A0A4B0] hover:text-[#CCFF00] text-left text-xs transition-colors" onClick={() => setSupportOpen(true)}>
+              Contact Us
+            </button>
+          </section>
+
+          <section>
+            <h3>Company</h3>
+            <Link to="/flash-club">About Flash</Link>
+            <Link to="/flash-club">Flash Club</Link>
+            <Link to="/shop">Flash Edit</Link>
+          </section>
+
+          <section>
+            <h3>Policies</h3>
+            <a href="#top">Privacy Policy</a>
+            <a href="#top">Terms of Service</a>
+            <a href="#top">Return Policy</a>
           </section>
         </div>
         <div className="shell footer-bottom">
